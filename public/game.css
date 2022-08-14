@@ -1,0 +1,10 @@
+.play-area {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+}
+
+.play-area .cell {
+    width:3em;
+    height: 5em;
+}
