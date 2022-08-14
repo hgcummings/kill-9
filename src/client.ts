@@ -25,3 +25,8 @@ function render(cards: Array<Card>) {
 }
 
 render(game.cards);
+
+playerInput.start(dir => {
+    game.update(dir);
+    render(game.cards);
+});
