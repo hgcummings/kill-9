@@ -20,6 +20,7 @@ export class Game {
 
     constructor(size: number) {
         this.size = size;
+
         while (this.cards.length < size) {
             const x = Math.floor(Math.random() * size);
             const y = Math.floor(Math.random() * size);
@@ -93,7 +94,7 @@ export class Game {
             for (const card of this.cards) {
                 if (card.target) {
                     const targetCard = this.cardAt(card.target.x, card.target.y);
-                    if (targetCard && targetCard.valid()) {
+                    if (targetCard && targetCard.valid() && !targetCard.target) {
                         console.log(`Merged ${card.val} into ${targetCard.val} to get ${card.val + targetCard.val}`)
                         targetCard.val += card.val;
 
