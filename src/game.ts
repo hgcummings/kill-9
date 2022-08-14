@@ -24,10 +24,17 @@ export class Game {
             const card = new Card();
             card.x = x;
             card.y = y;
-            card.val = 1 + Math.floor(Math.random() * 1.5);
+            card.val = this.nextValue();
 
             this.cards.push(card);
         }
+    }
+
+    // TODO: Preview next card
+    // TODO: Consistently shuffled bag
+    // TODO: Allow 3s/4s to appear?
+    nextValue() {
+        return 1 + Math.floor(Math.random() * 2);
     }
 
     cardAt(x: number, y: number) {
@@ -35,7 +42,8 @@ export class Game {
     }
 
     canMerge(a: number, b: number) {
-        return a !== b && (a % b === 0 || b % a === 0);
+        return a === 2 * b || a === 3 * b ||
+               b === 2 * a || b === 3 * a;
     }
 
     update(direction: Direction) {
@@ -74,20 +82,47 @@ export class Game {
             }
         }
 
-        for (const card of this.cards) {
-            if (card.target) {
-                const targetCard = this.cardAt(card.target.x, card.target.y);
-                if (targetCard) {
-                    targetCard.val += card.val;
-                    card.val = -1;
-                } else {
-                    card.x = card.target.x;
-                    card.y = card.target.y;
+        if (cardsMove) {
+            for (const card of this.cards) {
+                if (card.target) {
+                    const targetCard = this.cardAt(card.target.x, card.target.y);
+                    if (targetCard && targetCard.val > 0 && targetCard.val < 9) { // TODO: Remove repetition
+                        console.log(`Merged ${card.val} into ${targetCard.val} to get ${card.val + targetCard.val}`)
+                        targetCard.val += card.val;
+                        card.val = -1;
+                    } else {
+                        card.x = card.target.x;
+                        card.y = card.target.y;
+                    }
+                    delete card.target;
                 }
-                delete card.target;
             }
-        }
+    
+            this.cards = this.cards.filter(card => card.val > 0 && card.val < 9);
 
-        this.cards = this.cards.filter(card => card.val > 0);
+            let newLocation = [-1,-1];
+            do {
+                for (let dim = 0; dim < 2; ++dim) {
+                    switch (direction[dim]) {
+                        case -1:
+                            newLocation[dim] = this.size - 1;
+                            break;
+                        case 0:
+                            newLocation[dim] = Math.floor(Math.random() * this.size);
+                            break;
+                        case 1:
+                            newLocation[dim] = 0;
+                            break;
+                    }
+                }
+            } while (this.cardAt(newLocation[0], newLocation[1]));
+
+            const newCard = new Card();
+            newCard.x = newLocation[0];
+            newCard.y = newLocation[1];
+            newCard.val = this.nextValue();
+
+            this.cards.push(newCard);
+        }
     }
 }
