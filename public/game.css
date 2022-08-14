@@ -4,7 +4,7 @@
     grid-template-rows: repeat(3, 1fr);
 }
 
-.play-area .cell {
+.play-area .card {
     width:3em;
     height: 5em;
 }
