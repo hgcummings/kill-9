@@ -28,5 +28,6 @@ render(game.cards);
 
 playerInput.start(dir => {
     game.update(dir);
+    document.getElementById("score")!.innerText = game.score.toString();
     render(game.cards);
 });

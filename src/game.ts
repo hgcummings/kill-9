@@ -1,15 +1,22 @@
 export type Direction = [0,-1] | [1,0] | [0,1] | [-1,0]
 
+const WIN_VAL = 9;
+
 export class Card {
     x: number
     y: number
     val: number
     target?: { x: number, y: number }
+
+    valid() {
+        return this.val > 0 && this.val < WIN_VAL;
+    }
 }
 
 export class Game {
     cards = Array<Card>()
     size: number
+    score = 0
 
     constructor(size: number) {
         this.size = size;
@@ -86,9 +93,14 @@ export class Game {
             for (const card of this.cards) {
                 if (card.target) {
                     const targetCard = this.cardAt(card.target.x, card.target.y);
-                    if (targetCard && targetCard.val > 0 && targetCard.val < 9) { // TODO: Remove repetition
+                    if (targetCard && targetCard.valid()) {
                         console.log(`Merged ${card.val} into ${targetCard.val} to get ${card.val + targetCard.val}`)
                         targetCard.val += card.val;
+
+                        if (targetCard.val === WIN_VAL) {
+                            this.score += targetCard.val;
+                        }
+
                         card.val = -1;
                     } else {
                         card.x = card.target.x;
@@ -96,9 +108,9 @@ export class Game {
                     }
                     delete card.target;
                 }
-            }
-    
-            this.cards = this.cards.filter(card => card.val > 0 && card.val < 9);
+            }            
+
+            this.cards = this.cards.filter(card => card.valid());
 
             let newLocation = [-1,-1];
             do {
