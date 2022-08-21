@@ -69,56 +69,10 @@ export class Game {
         }
     }
 
-    private *generateNext() {
-        const bag = new Array<number>();
-
-        while (true) {
-            if (bag.length === 0) {
-                const allItems = [1,2]; // TODO: Allow 3s/4s to appear?
-                while (allItems.length) {
-                    const randomItem = allItems.splice(Math.floor(Math.random() * allItems.length), 1)[0];
-                    bag.push(randomItem);
-                }
-            }
-    
-            yield bag.pop()!;
-        }
-    }
-
-    private cardAt(x: number, y: number) {
-        return this.cards.find(c => c.x === x && c.y === y);
-    }
-
-    private newCardAfterMove(direction: Direction) {
-        let newLocation = [-1, -1];
-        do {
-            for (let dim = 0; dim < 2; ++dim) {
-                switch (direction[dim]) {
-                    case -1:
-                        newLocation[dim] = this.size - 1;
-                        break;
-                    case 0:
-                        newLocation[dim] = Math.floor(Math.random() * this.size);
-                        break;
-                    case 1:
-                        newLocation[dim] = 0;
-                        break;
-                }
-            }
-        } while (this.cardAt(newLocation[0], newLocation[1]));
-
-        const newCard = new Card();
-        newCard.x = newLocation[0];
-        newCard.y = newLocation[1];
-        newCard.val = this.next;
-        this.next = this.iterator.next().value;
-        return newCard;
-    }
-
-    private existingCardsAfterMove(direction: Direction) {
+    existingCardsAfterMove(direction: Direction) {
         let cardsToProcess = this.cards.concat();
-        let areChanged = false;
         let newCards = new Array<Card>();
+        let areChanged = false;
         let finalPass = false;
 
         while(true) {
@@ -177,6 +131,52 @@ export class Game {
             newCards,
             areChanged
         }
+    }
+
+    private *generateNext() {
+        const bag = new Array<number>();
+
+        while (true) {
+            if (bag.length === 0) {
+                const allItems = [1,2]; // TODO: Allow 3s/4s to appear?
+                while (allItems.length) {
+                    const randomItem = allItems.splice(Math.floor(Math.random() * allItems.length), 1)[0];
+                    bag.push(randomItem);
+                }
+            }
+    
+            yield bag.pop()!;
+        }
+    }
+
+    private cardAt(x: number, y: number) {
+        return this.cards.find(c => c.x === x && c.y === y);
+    }
+
+    private newCardAfterMove(direction: Direction) {
+        let newLocation = [-1, -1];
+        do {
+            for (let dim = 0; dim < 2; ++dim) {
+                switch (direction[dim]) {
+                    case -1:
+                        newLocation[dim] = this.size - 1;
+                        break;
+                    case 0:
+                        newLocation[dim] = Math.floor(Math.random() * this.size);
+                        break;
+                    case 1:
+                        newLocation[dim] = 0;
+                        break;
+                }
+            }
+        } while (this.cardAt(newLocation[0], newLocation[1]));
+
+        const newCard = new Card();
+        newCard.x = newLocation[0];
+        newCard.y = newLocation[1];
+        newCard.val = this.next;
+        this.next = this.iterator.next().value;
+        return newCard;
     }
 
     private canMerge(a: number, b: number) {
