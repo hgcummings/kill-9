@@ -50,13 +50,31 @@ export class Game {
         this.next = this.iterator.next().value
     }
 
-    // TODO: Allow 3s/4s to appear?
-    *generateNext() {
+    update(direction: Direction) {
+        let { newCards, areChanged } = this.existingCardsAfterMove(direction);
+
+        if (areChanged) {
+            this.cards = newCards;
+            for (const card of this.cards) {
+                if (card.val === WIN_VAL) {
+                    this.score += card.val;
+                }
+            }            
+
+            this.cards = this.cards.filter(card => card.valid());
+
+            const newCard = this.newCardAfterMove(direction);
+
+            this.cards.push(newCard);
+        }
+    }
+
+    private *generateNext() {
         const bag = new Array<number>();
 
         while (true) {
             if (bag.length === 0) {
-                const allItems = [1,2];
+                const allItems = [1,2]; // TODO: Allow 3s/4s to appear?
                 while (allItems.length) {
                     const randomItem = allItems.splice(Math.floor(Math.random() * allItems.length), 1)[0];
                     bag.push(randomItem);
@@ -67,20 +85,40 @@ export class Game {
         }
     }
 
-    cardAt(x: number, y: number) {
+    private cardAt(x: number, y: number) {
         return this.cards.find(c => c.x === x && c.y === y);
     }
 
-    canMerge(a: number, b: number) {
-        return a === 2 * b || a === 3 * b ||
-               b === 2 * a || b === 3 * a;
+    private newCardAfterMove(direction: Direction) {
+        let newLocation = [-1, -1];
+        do {
+            for (let dim = 0; dim < 2; ++dim) {
+                switch (direction[dim]) {
+                    case -1:
+                        newLocation[dim] = this.size - 1;
+                        break;
+                    case 0:
+                        newLocation[dim] = Math.floor(Math.random() * this.size);
+                        break;
+                    case 1:
+                        newLocation[dim] = 0;
+                        break;
+                }
+            }
+        } while (this.cardAt(newLocation[0], newLocation[1]));
+
+        const newCard = new Card();
+        newCard.x = newLocation[0];
+        newCard.y = newLocation[1];
+        newCard.val = this.next;
+        this.next = this.iterator.next().value;
+        return newCard;
     }
 
-    update(direction: Direction) {
-        const newCards = Array<Card>();
+    private existingCardsAfterMove(direction: Direction) {
         let cardsToProcess = this.cards.concat();
-        let cardsMove = false;
-
+        let areChanged = false;
+        let newCards = new Array<Card>();
         let finalPass = false;
 
         while(true) {
@@ -105,7 +143,7 @@ export class Game {
                         if (this.canMerge(card.val, cardAtTarget.val)) {
                             // Case 2: card can merge into another card
                             cardAtTarget.val += card.val;
-                            cardsMove = true;
+                            areChanged = true;
                         } else {
                             // Case 3: card can't move because it's against another card
                             newCards.push(card.copy());
@@ -121,7 +159,7 @@ export class Game {
                             newCard.y = newY;
                             newCard.val = card.val;
                             newCards.push(newCard);
-                            cardsMove = true;
+                            areChanged = true;
                         }
                     }
                 }
@@ -135,40 +173,14 @@ export class Game {
             }
         }
 
-        if (cardsMove) {
-            this.cards = newCards;
-            for (const card of this.cards) {
-                if (card.val === WIN_VAL) {
-                    this.score += card.val;
-                }
-            }            
-
-            this.cards = this.cards.filter(card => card.valid());
-
-            let newLocation = [-1,-1];
-            do {
-                for (let dim = 0; dim < 2; ++dim) {
-                    switch (direction[dim]) {
-                        case -1:
-                            newLocation[dim] = this.size - 1;
-                            break;
-                        case 0:
-                            newLocation[dim] = Math.floor(Math.random() * this.size);
-                            break;
-                        case 1:
-                            newLocation[dim] = 0;
-                            break;
-                    }
-                }
-            } while (this.cardAt(newLocation[0], newLocation[1]));
-
-            const newCard = new Card();
-            newCard.x = newLocation[0];
-            newCard.y = newLocation[1];
-            newCard.val = this.next;
-            this.next = this.iterator.next().value;
-
-            this.cards.push(newCard);
+        return {
+            newCards,
+            areChanged
         }
+    }
+
+    private canMerge(a: number, b: number) {
+        return a === 2 * b || a === 3 * b ||
+               b === 2 * a || b === 3 * a;
     }
 }
