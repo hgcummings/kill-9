@@ -6,7 +6,14 @@ export class Card {
     x: number
     y: number
     val: number
-    target?: { x: number, y: number }
+    
+    copy() {
+        const newCard = new Card();
+        newCard.x = this.x;
+        newCard.y = this.y;
+        newCard.val = this.val;
+        return newCard;
+    }
 
     valid() {
         return this.val > 0 && this.val < WIN_VAL;
@@ -56,7 +63,7 @@ export class Game {
                 }
             }
     
-            yield bag.pop();
+            yield bag.pop()!;
         }
     }
 
@@ -70,59 +77,69 @@ export class Game {
     }
 
     update(direction: Direction) {
-        const dir_1dim = direction[0] === 0 ? direction[1] : direction[0];
-        const dir_axis = direction[0] === 0 ? 1 : 0;
-        const start = dir_1dim === 1 ? this.size - 2 : 1;
-
+        const newCards = Array<Card>();
+        let cardsToProcess = this.cards.concat();
         let cardsMove = false;
 
-        for (let line = start; line >= 0 && line < this.size; line -= dir_1dim) {
-            for (let slot = 0; slot < this.size; ++slot) {
-                let x: number, y: number;
-                if (dir_axis === 0) {
-                    x = line;
-                    y = slot;
+        let finalPass = false;
+
+        while(true) {
+            const remainingCardsToProcess = Array<Card>();
+            for (const card of cardsToProcess) {
+                let newX = card.x + direction[0];
+                let newY = card.y + direction[1];
+    
+                if (newX < 0 || newX >= this.size) {
+                    newX = card.x;
+                }
+                if (newY < 0 || newY >= this.size) {
+                    newY = card.y;
+                }
+    
+                if (newX === card.x && newY === card.y) {
+                    // Case 1: card can't move because it's against a wall
+                    newCards.push(card.copy());
                 } else {
-                    x = slot;
-                    y = line;
+                    const cardAtTarget = newCards.find(c => c.x === newX && c.y === newY);
+                    if (cardAtTarget) {
+                        if (this.canMerge(card.val, cardAtTarget.val)) {
+                            // Case 2: card can merge into another card
+                            cardAtTarget.val += card.val;
+                            cardsMove = true;
+                        } else {
+                            // Case 3: card can't move because it's against another card
+                            newCards.push(card.copy());
+                        }
+                    } else {
+                        // Case 4: card might be able to move into a space, but we can only be sure
+                        // the space exists once we've finished processing all the other cases
+                        if (!finalPass) {
+                            remainingCardsToProcess.push(card);
+                        } else {
+                            const newCard = new Card();
+                            newCard.x = newX;
+                            newCard.y = newY;
+                            newCard.val = card.val;
+                            newCards.push(newCard);
+                            cardsMove = true;
+                        }
+                    }
                 }
-
-                let card = this.cardAt(x, y);
-                if (!card) {
-                    continue;
-                }
-
-                let target = {
-                    x: x + direction[0],
-                    y: y + direction[1]
-                };
-
-                const targetCard = this.cardAt(target.x, target.y);
-                if (!targetCard || targetCard.target || this.canMerge(card.val, targetCard.val)) {
-                    card.target = target;
-                    cardsMove = true;
-                }
+            }
+            if (remainingCardsToProcess.length === 0) {
+                break;
+            } else if (remainingCardsToProcess.length === cardsToProcess.length) {
+                finalPass = true;
+            } else {
+                cardsToProcess = remainingCardsToProcess;
             }
         }
 
         if (cardsMove) {
+            this.cards = newCards;
             for (const card of this.cards) {
-                if (card.target) {
-                    const targetCard = this.cardAt(card.target.x, card.target.y);
-                    if (targetCard && targetCard.valid() && !targetCard.target) {
-                        console.log(`Merged ${card.val} into ${targetCard.val} to get ${card.val + targetCard.val}`)
-                        targetCard.val += card.val;
-
-                        if (targetCard.val === WIN_VAL) {
-                            this.score += targetCard.val;
-                        }
-
-                        card.val = -1;
-                    } else {
-                        card.x = card.target.x;
-                        card.y = card.target.y;
-                    }
-                    delete card.target;
+                if (card.val === WIN_VAL) {
+                    this.score += card.val;
                 }
             }            
 
