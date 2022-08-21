@@ -1,6 +1,6 @@
 export type Direction = [0,-1] | [1,0] | [0,1] | [-1,0]
-
-const WIN_VAL = 9;
+export const ALL_DIRECTIONS: Array<Direction> = [[0,-1], [1,0], [0,1], [-1,0]];
+export const WIN_VAL = 9;
 
 export class Card {
     x: number
