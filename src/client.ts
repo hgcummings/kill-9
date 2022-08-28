@@ -6,9 +6,15 @@ const playerInput = new KeyboardInput();
 
 const size = 3;
 const games = new Array<Game>();
+const lastRenderedState = new Array<Array<{val:number, since:number}>>();
 
 for (let i = 0; i < 9; ++i) {
     games.push(new Game(size));
+    const initState = new Array<{val:number, since:number}>();
+    for (let j = 0; j < size * size; ++j) {
+        initState.push({ val: 0, since: 0 });
+    }
+    lastRenderedState.push(initState);
 }
 
 function grpIdx(idx: number, size: number) {
@@ -41,22 +47,49 @@ function renderCards(cards: Array<Card>, pos: number) {
     console.log(pos, offsetX, offsetY);
 
     ctx.translate(offsetX, offsetY);
-    ctx.clearRect(0, 0, cellSize * size, cellSize * size);
+    ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
+    ctx.fillRect(0, 0, cellSize * size, cellSize * size);
 
-    for (const card of cards) {
-        ctx.fillStyle = "rgb(173,255,47)";
-        ctx.fillRect(
-            (card.x + 0.1) * cellSize,
-            (card.y + 0.1) * cellSize,
-            0.8 * cellSize,
-            0.8 * cellSize);
+    ctx.fillStyle = "rgb(173,255,47)";
+    ctx.strokeStyle = "rgba(173,255,47,0.25)";
 
-        ctx.fillStyle = "rgb(0,0,0)";
-        ctx.fillText(
-            card.val.toString(),
-            (card.x + 0.5) * cellSize,
-            (card.y + 0.5) * cellSize,
-            0.8 * cellSize);
+    const renderState = lastRenderedState[pos];
+    for (let i = 0; i < renderState.length; ++i) {
+        const card = cards.find(c => c.x === i % size && c.y === Math.floor(i / size));
+        if (!card) {
+            renderState[i].val = 0;
+        } else {
+            if (card.val != renderState[i].val) {
+                renderState[i].val = card.val;
+                renderState[i].since = Date.now();
+            }
+
+            const dt = Date.now() - renderState[i].since;
+            ctx.save();
+            ctx.translate((card.x + 0.5) * cellSize, (card.y + 0.5) * cellSize);
+            const path = (card.val > 1) ? new Path2D() : null;
+            for (let j = 0; j < card.val; ++j) {
+                const angle = 2 * Math.PI * ((dt / 2000) + (j / card.val));
+                const radius = cellSize / 3;
+                const x = Math.sin(-angle) * radius;
+                const y = Math.cos(-angle) * radius;
+                const size = cellSize / 32;
+                ctx.fillRect(x - size / 2, y - size / 2, size, size);
+
+                if (path) {
+                    if (j === 0) {
+                        path.moveTo(x, y);
+                    } else {
+                        path.lineTo(x, y);
+                    }
+                }
+            }
+            if (path) {
+                path.closePath();
+                ctx.stroke(path);
+            }
+            ctx.restore();
+        }
     }
 
     ctx.restore();
