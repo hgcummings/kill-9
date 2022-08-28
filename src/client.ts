@@ -4,23 +4,41 @@ import { KeyboardInput } from "./input.js";
 const playerInput = new KeyboardInput();
 
 const size = 3;
+const cellSize = 120;
 const game = new Game(size);
 
+const canvas = new Array<HTMLCanvasElement>();
+
 function renderCards(cards: Array<Card>) {
-    let playArea = document.getElementById("player-0");
-    if (playArea === null) {
-        return;
+    if (!canvas[0]) {
+        let playArea = document.getElementById("player-0");
+        if (playArea === null) {
+            return;
+        }
+        let canvasElem = document.createElement("canvas");
+        canvasElem.width = size * cellSize;
+        canvasElem.height = size * cellSize;
+        playArea.appendChild(canvasElem);
+        canvas[0] = canvasElem;
     }
 
-    playArea.innerHTML = "";
+    const ctx = canvas[0].getContext("2d")!;
+    ctx.clearRect(0, 0, cellSize * size, cellSize * size);
 
     for (const card of cards) {
-        const elem = document.createElement("div");
-        elem.style.gridColumn = (card.x + 1).toString();
-        elem.style.gridRow = (card.y + 1).toString();
-        elem.innerText = card.val.toString();
-        elem.classList.add("card");
-        playArea.appendChild(elem);
+        ctx.fillStyle = "rgb(173,255,47)";
+        ctx.fillRect(
+            (card.x + 0.1) * cellSize,
+            (card.y + 0.1) * cellSize,
+            0.8 * cellSize,
+            0.8 * cellSize);
+
+        ctx.fillStyle = "rgb(0,0,0)";
+        ctx.fillText(
+            card.val.toString(),
+            (card.x + 0.5) * cellSize,
+            (card.y + 0.5) * cellSize,
+            0.8 * cellSize);
     }
 }
 
