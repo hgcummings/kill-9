@@ -6,3 +6,11 @@ html {
     font-weight: bold;
     text-shadow: 0 0 0.25em white;
 }
+
+html, body {
+    margin: 0;
+}
+
+body {
+    text-align: center;
+}

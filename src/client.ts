@@ -1,28 +1,46 @@
 import { Card, Game } from "./game.js";
 import { KeyboardInput } from "./input.js";
+import { Bot } from "./bot.js";
 
 const playerInput = new KeyboardInput();
 
 const size = 3;
-const cellSize = 120;
-const game = new Game(size);
+const games = new Array<Game>();
 
-const canvas = new Array<HTMLCanvasElement>();
+for (let i = 0; i < 9; ++i) {
+    games.push(new Game(size));
+}
 
-function renderCards(cards: Array<Card>) {
-    if (!canvas[0]) {
-        let playArea = document.getElementById("player-0");
-        if (playArea === null) {
+function grpIdx(idx: number, size: number) {
+    return Math.floor(idx / size);
+}
+
+let canvas: HTMLCanvasElement | null;
+
+function renderCards(cards: Array<Card>, pos: number) {
+    if (!canvas) {
+        let gameElem = document.getElementById("game");
+        if (gameElem === null) {
             return;
         }
-        let canvasElem = document.createElement("canvas");
-        canvasElem.width = size * cellSize;
-        canvasElem.height = size * cellSize;
-        playArea.appendChild(canvasElem);
-        canvas[0] = canvasElem;
+        canvas = document.createElement("canvas");
+        canvas.width = window.innerWidth;
+        canvas.height = Math.round(window.innerWidth * 3 / 8);
+        gameElem.appendChild(canvas);
     }
 
-    const ctx = canvas[0].getContext("2d")!;
+    const cellSize = pos === 0 ? canvas.width / 12 : canvas.width / 16;
+    const ctx = canvas.getContext("2d")!;
+    ctx.save();
+
+    const offsetX = pos === 0
+        ? canvas.width * 3 / 8
+        : canvas.width * ((grpIdx(pos - 1, 2) * 3 / 16) + (grpIdx(pos - 1, 4) / 4));
+    const offsetY = (pos === 0 || pos % 2 === 0) ? 0 : canvas.height / 2;
+
+    console.log(pos, offsetX, offsetY);
+
+    ctx.translate(offsetX, offsetY);
     ctx.clearRect(0, 0, cellSize * size, cellSize * size);
 
     for (const card of cards) {
@@ -40,6 +58,8 @@ function renderCards(cards: Array<Card>) {
             (card.y + 0.5) * cellSize,
             0.8 * cellSize);
     }
+
+    ctx.restore();
 }
 
 function renderHud(game: { score: number, next: number }) {
@@ -47,11 +67,27 @@ function renderHud(game: { score: number, next: number }) {
     document.getElementById("next")!.innerText = game.next.toString();    
 }
 
-renderCards(game.cards);
-renderHud(game);
-
 playerInput.start(dir => {
-    game.update(dir);
-    renderCards(game.cards);
-    renderHud(game);
+    games[0].update(dir);
 });
+
+const bot = new Bot();
+for (let i = 1; i < 9; ++i) {
+    const game = games[i];
+    function update() {
+        game.update(bot.chooseNextMove(game));
+        window.setTimeout(update, 1000 + 1000 * Math.random());
+    }
+    
+    window.setTimeout(update, 1000 + 1000 * Math.random());
+}
+
+function render() {
+    games.forEach((game, i) => {
+        renderCards(game.cards, i);
+    });
+    renderHud(games[0]);
+    window.requestAnimationFrame(render);
+}
+
+window.requestAnimationFrame(render);
