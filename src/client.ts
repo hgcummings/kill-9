@@ -126,7 +126,8 @@ function distributeGarbage(gameId: number) {
             target = Math.floor(Math.random() * games.length);
         }
 
-        games[target].garbageIn++;
+        games[target].garbageIn.push(8);
+        games[target].garbageIn.push(1);
     }
 }
 
