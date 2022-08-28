@@ -44,14 +44,9 @@ function renderCards(cards: Array<Card>, pos: number) {
         : canvas.width * ((grpIdx(pos - 1, 2) * 3 / 16) + (grpIdx(pos - 1, 4) / 4));
     const offsetY = (pos === 0 || pos % 2 === 0) ? 0 : canvas.height / 2;
 
-    console.log(pos, offsetX, offsetY);
-
     ctx.translate(offsetX, offsetY);
     ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
     ctx.fillRect(0, 0, cellSize * size, cellSize * size);
-
-    ctx.fillStyle = "rgb(173,255,47)";
-    ctx.strokeStyle = "rgba(173,255,47,0.25)";
 
     const renderState = lastRenderedState[pos];
     for (let i = 0; i < renderState.length; ++i) {
@@ -66,6 +61,15 @@ function renderCards(cards: Array<Card>, pos: number) {
 
             const dt = Date.now() - renderState[i].since;
             ctx.save();
+
+            if (card.val === 8) {
+                ctx.fillStyle = "rgb(255,173,47)";
+                ctx.strokeStyle = "rgba(255,173,47,0.25)";
+            } else {
+                ctx.fillStyle = "rgb(173,255,47)";
+                ctx.strokeStyle = "rgba(173,255,47,0.25)";
+            }
+
             ctx.translate((card.x + 0.5) * cellSize, (card.y + 0.5) * cellSize);
             const path = (card.val > 1) ? new Path2D() : null;
             for (let j = 0; j < card.val; ++j) {
