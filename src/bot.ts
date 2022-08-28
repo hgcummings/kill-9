@@ -9,9 +9,11 @@ export class Bot {
 
             for (const card of newCards) {
                 if (card.val === WIN_VAL) {
-                    score += card.val;
+                    score += card.val * 2;
                 } else if (card.val === 8) {
-                    score -= card.val;
+                    score -= card.val * 2;
+                } else if (card.val === 6) {
+                    score += card.val;
                 }
             }
 

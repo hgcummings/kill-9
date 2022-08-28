@@ -140,7 +140,8 @@ playerInput.start(dir => {
 });
 
 const bot = new Bot();
-const botTurnInterval = 1000;
+const botMinTurn = 500;
+const botMaxTurn = 1000;
 for (let i = 1; i < 9; ++i) {
     const game = games[i];
     const idx = i;
@@ -148,11 +149,11 @@ for (let i = 1; i < 9; ++i) {
         if (game.alive) {
             game.update(bot.chooseNextMove(game));
             distributeGarbage(idx);
-            window.setTimeout(update, botTurnInterval + botTurnInterval * Math.random());
+            window.setTimeout(update, botMinTurn + (botMaxTurn - botMinTurn) * Math.random());
         }
     }
     
-    window.setTimeout(update, botTurnInterval + botTurnInterval * Math.random());
+    window.setTimeout(update, botMinTurn + (botMaxTurn - botMinTurn) * Math.random());
 }
 
 function render() {
