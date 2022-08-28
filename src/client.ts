@@ -99,9 +99,8 @@ function renderCards(cards: Array<Card>, pos: number) {
     ctx.restore();
 }
 
-function renderHud(game: { score: number, next: number }) {
+function renderHud(game: { score: number }) {
     document.getElementById("score")!.innerText = game.score.toString();
-    document.getElementById("next")!.innerText = game.next.toString();    
 }
 
 playerInput.start(dir => {

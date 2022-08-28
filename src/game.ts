@@ -23,13 +23,11 @@ export class Card {
 export class Game {
     cards = Array<Card>()
     size: number
-    next: number
     iterator: Generator<number>
     score = 0
 
     constructor(size: number) {
         this.size = size;
-        this.iterator = this.generateNext();
 
         while (this.cards.length < size) {
             const x = Math.floor(Math.random() * size);
@@ -42,12 +40,10 @@ export class Game {
             const card = new Card();
             card.x = x;
             card.y = y;
-            card.val = this.iterator.next().value;
+            card.val = 1;
 
             this.cards.push(card);
         }
-
-        this.next = this.iterator.next().value
     }
 
     update(direction: Direction) {
@@ -133,22 +129,6 @@ export class Game {
         }
     }
 
-    private *generateNext() {
-        const bag = new Array<number>();
-
-        while (true) {
-            if (bag.length === 0) {
-                const allItems = [1,2]; // TODO: Allow 3s/4s to appear?
-                while (allItems.length) {
-                    const randomItem = allItems.splice(Math.floor(Math.random() * allItems.length), 1)[0];
-                    bag.push(randomItem);
-                }
-            }
-    
-            yield bag.pop()!;
-        }
-    }
-
     private cardAt(x: number, y: number) {
         return this.cards.find(c => c.x === x && c.y === y);
     }
@@ -174,13 +154,12 @@ export class Game {
         const newCard = new Card();
         newCard.x = newLocation[0];
         newCard.y = newLocation[1];
-        newCard.val = this.next;
-        this.next = this.iterator.next().value;
+        newCard.val = 1;
         return newCard;
     }
 
     private canMerge(a: number, b: number) {
-        return a === 2 * b || a === 3 * b ||
+        return a === b || a === 2 * b || a === 3 * b ||
                b === 2 * a || b === 3 * a;
     }
 }
