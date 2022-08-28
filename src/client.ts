@@ -47,6 +47,19 @@ function renderCards(cards: Array<Card>, pos: number) {
     ctx.translate(offsetX, offsetY);
     ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
     ctx.fillRect(0, 0, cellSize * size, cellSize * size);
+    
+    ctx.fillStyle = "rgb(173,255,47)";
+    ctx.strokeStyle = "rgb(173,255,47)";
+    ctx.shadowColor = "rgba(173,255,47,0.5)";
+    ctx.shadowBlur = 3;
+    ctx.strokeRect(
+        cellSize / 12,
+        cellSize / 12,
+        cellSize * size - cellSize / 6,
+        cellSize * size - cellSize / 6
+    );
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = "rgba(173,255,47,0.25)";
 
     const renderState = lastRenderedState[pos];
     for (let i = 0; i < renderState.length; ++i) {
@@ -65,12 +78,13 @@ function renderCards(cards: Array<Card>, pos: number) {
             if (card.val === 8) {
                 ctx.fillStyle = "rgb(255,173,47)";
                 ctx.strokeStyle = "rgba(255,173,47,0.25)";
-            } else {
-                ctx.fillStyle = "rgb(173,255,47)";
-                ctx.strokeStyle = "rgba(173,255,47,0.25)";
             }
 
-            ctx.translate((card.x + 0.5) * cellSize, (card.y + 0.5) * cellSize);
+            const margin = (1 - size) / 2;
+            ctx.translate(
+                cellSize * (card.x + 0.5 - (card.x + margin) / 6),
+                cellSize * (card.y + 0.5 - (card.y + margin) / 6)
+            );
             const path = (card.val > 1) ? new Path2D() : null;
             for (let j = 0; j < card.val; ++j) {
                 const angle = 2 * Math.PI * ((dt / 2000) + (j / card.val));
