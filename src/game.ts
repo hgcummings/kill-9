@@ -26,8 +26,10 @@ export class Game {
     next: number
     iterator: Generator<number>
     score = 0
+    kills = 0
     garbageIn = new Array<number>()
     garbageOut = 0
+    lastAttacker?: Game
     alive = true
 
     constructor(size: number) {
@@ -77,6 +79,9 @@ export class Game {
 
         if (availableDirections.length === 0) {
             this.alive = false;
+            if (this.lastAttacker) {
+                this.lastAttacker.kills++;
+            }
         }
     }
 

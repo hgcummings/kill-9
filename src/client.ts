@@ -7,7 +7,6 @@ const playerInput = new KeyboardInput();
 const size = 3;
 const games = new Array<Game>();
 const lastRenderedState = new Array<Array<{val:number, since:number}>>();
-const lastAttacker = new Array<number>();
 
 for (let i = 0; i < 9; ++i) {
     games.push(new Game(size));
@@ -16,7 +15,6 @@ for (let i = 0; i < 9; ++i) {
         initState.push({ val: 0, since: 0 });
     }
     lastRenderedState.push(initState);
-    lastAttacker.push(-1);
 }
 
 function grpIdx(idx: number, size: number) {
@@ -115,8 +113,9 @@ function renderCards(cards: Array<Card>, pos: number) {
     ctx.restore();
 }
 
-function renderHud(game: { score: number }) {
+function renderHud(game: { kills: number, score: number }) {
     document.getElementById("score")!.innerText = game.score.toString();
+    document.getElementById("kills")!.innerText = game.kills.toString();
 }
 
 function distributeGarbage(attacker: number) {
@@ -131,7 +130,7 @@ function distributeGarbage(attacker: number) {
         console.log(`Sending garbage from ${attacker} to ${target}`);
         games[target].garbageIn.push(8);
         games[target].garbageIn.push(1);
-        lastAttacker[target] = attacker;
+        games[target].lastAttacker = games[attacker];
     }
 }
 
