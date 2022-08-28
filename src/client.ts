@@ -7,6 +7,7 @@ const playerInput = new KeyboardInput();
 const size = 3;
 const games = new Array<Game>();
 const lastRenderedState = new Array<Array<{val:number, since:number}>>();
+const lastAttacker = new Array<number>();
 
 for (let i = 0; i < 9; ++i) {
     games.push(new Game(size));
@@ -15,6 +16,7 @@ for (let i = 0; i < 9; ++i) {
         initState.push({ val: 0, since: 0 });
     }
     lastRenderedState.push(initState);
+    lastAttacker.push(-1);
 }
 
 function grpIdx(idx: number, size: number) {
@@ -42,7 +44,7 @@ function renderCards(cards: Array<Card>, pos: number) {
     const offsetX = pos === 0
         ? canvas.width * 3 / 8
         : canvas.width * ((grpIdx(pos - 1, 2) * 3 / 16) + (grpIdx(pos - 1, 4) / 4));
-    const offsetY = (pos === 0 || pos % 2 === 0) ? 0 : canvas.height / 2;
+    const offsetY = (pos === 0 || pos % 2 === 1) ? 0 : canvas.height / 2;
 
     ctx.translate(offsetX, offsetY);
     ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
@@ -117,17 +119,19 @@ function renderHud(game: { score: number }) {
     document.getElementById("score")!.innerText = game.score.toString();
 }
 
-function distributeGarbage(gameId: number) {
-    while (games[gameId].garbageOut > 0) {
-        games[gameId].garbageOut--;
+function distributeGarbage(attacker: number) {
+    while (games[attacker].garbageOut > 0) {
+        games[attacker].garbageOut--;
 
-        let target = gameId;
-        while (target === gameId) {
+        let target = attacker;
+        while (target === attacker || !games[target].alive) {
             target = Math.floor(Math.random() * games.length);
         }
 
+        console.log(`Sending garbage from ${attacker} to ${target}`);
         games[target].garbageIn.push(8);
         games[target].garbageIn.push(1);
+        lastAttacker[target] = attacker;
     }
 }
 
@@ -137,21 +141,26 @@ playerInput.start(dir => {
 });
 
 const bot = new Bot();
+const botTurnInterval = 1000;
 for (let i = 1; i < 9; ++i) {
     const game = games[i];
     const idx = i;
     function update() {
-        game.update(bot.chooseNextMove(game));
-        distributeGarbage(i);
-        window.setTimeout(update, 1000 + 1000 * Math.random());
+        if (game.alive) {
+            game.update(bot.chooseNextMove(game));
+            distributeGarbage(idx);
+            window.setTimeout(update, botTurnInterval + botTurnInterval * Math.random());
+        }
     }
     
-    window.setTimeout(update, 1000 + 1000 * Math.random());
+    window.setTimeout(update, botTurnInterval + botTurnInterval * Math.random());
 }
 
 function render() {
     games.forEach((game, i) => {
-        renderCards(game.cards, i);
+        if (game.alive) {
+            renderCards(game.cards, i);
+        }
     });
     renderHud(games[0]);
     window.requestAnimationFrame(render);

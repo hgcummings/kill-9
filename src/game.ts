@@ -28,6 +28,7 @@ export class Game {
     score = 0
     garbageIn = new Array<number>()
     garbageOut = 0
+    alive = true
 
     constructor(size: number) {
         this.size = size;
@@ -68,6 +69,14 @@ export class Game {
             const newCard = this.newCardAfterMove(direction);
 
             this.cards.push(newCard);
+        }
+
+        const availableDirections = ALL_DIRECTIONS
+            .map(direction => this.existingCardsAfterMove(direction))
+            .filter(result => result.areChanged);
+
+        if (availableDirections.length === 0) {
+            this.alive = false;
         }
     }
 
