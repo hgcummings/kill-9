@@ -117,15 +117,31 @@ function renderHud(game: { score: number }) {
     document.getElementById("score")!.innerText = game.score.toString();
 }
 
+function distributeGarbage(gameId: number) {
+    while (games[gameId].garbageOut > 0) {
+        games[gameId].garbageOut--;
+
+        let target = gameId;
+        while (target === gameId) {
+            target = Math.floor(Math.random() * games.length);
+        }
+
+        games[target].garbageIn++;
+    }
+}
+
 playerInput.start(dir => {
     games[0].update(dir);
+    distributeGarbage(0);
 });
 
 const bot = new Bot();
 for (let i = 1; i < 9; ++i) {
     const game = games[i];
+    const idx = i;
     function update() {
         game.update(bot.chooseNextMove(game));
+        distributeGarbage(i);
         window.setTimeout(update, 1000 + 1000 * Math.random());
     }
     

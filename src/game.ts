@@ -25,6 +25,8 @@ export class Game {
     size: number
     iterator: Generator<number>
     score = 0
+    garbageIn = 0
+    garbageOut = 0
 
     constructor(size: number) {
         this.size = size;
@@ -54,6 +56,7 @@ export class Game {
             for (const card of this.cards) {
                 if (card.val === WIN_VAL) {
                     this.score += card.val;
+                    this.garbageOut++;
                 }
             }            
 
@@ -154,12 +157,18 @@ export class Game {
         const newCard = new Card();
         newCard.x = newLocation[0];
         newCard.y = newLocation[1];
-        newCard.val = 1;
+        if (this.garbageIn > 0) {
+            this.garbageIn--;
+            newCard.val = 8;
+        } else {
+            newCard.val = 1;
+        }
         return newCard;
     }
 
     private canMerge(a: number, b: number) {
-        return a === b || a === 2 * b || a === 3 * b ||
-               b === 2 * a || b === 3 * a;
+        return (a === 1 && b === 1) ||
+                a === 2 * b || a === 3 * b ||
+                b === 2 * a || b === 3 * a;
     }
 }
