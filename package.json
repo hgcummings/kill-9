@@ -30,11 +30,13 @@
     "pg-hstore": "^2.3.4",
     "sequelize": "^6.6.5",
     "socket.io": "^4.5.1",
-    "sqlite3": "^5.0.11"
+    "sqlite3": "^5.0.11",
+    "xm-username-generator": "^1.0.1"
   },
   "devDependencies": {
     "mocha": "^10.0.0",
     "nodemon": "^2.0.19",
-    "socket.io-client": "^4.5.1"
+    "socket.io-client": "^4.5.1",
+    "typescript": "^4.8.2"
   }
 }
