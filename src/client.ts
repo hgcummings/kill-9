@@ -76,8 +76,8 @@ function renderCards(cards: Array<Card>, pos: number) {
             ctx.save();
 
             if (card.val === 8) {
-                ctx.fillStyle = "rgb(255,173,47)";
-                ctx.strokeStyle = "rgba(255,173,47,0.25)";
+                ctx.fillStyle = "rgb(255,47,47)";
+                ctx.strokeStyle = "rgba(255,47,47,0.25)";
             }
 
             const margin = (1 - size) / 2;
