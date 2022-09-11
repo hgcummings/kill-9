@@ -1,173 +1,83 @@
 import { Socket } from "socket.io";
+import { Direction } from "./game";
+import { seedFromSystemRandom } from "./rng";
+import { BotPlayer, ParentBattle, Player } from "./player";
 
 declare const storage: {
-	get(key:string, defaultValue:any, json?:boolean): Promise<any>
-	set(key:string, value:any, json?:boolean): Promise<boolean>
+    get(key:string, defaultValue:any, json?:boolean): Promise<any>
+    set(key:string, value:any, json?:boolean): Promise<boolean>
 }
 
-/**
- * User sessions
- * @param {Array} users
- */
-const users = Array<User>();
+const users = Array<UserPlayer>();
 
-/**
- * Find opponent for a user
- * @param {User} user
- */
-function findOpponent(user) {
-	for (let i = 0; i < users.length; i++) {
-		if (
-			user !== users[i] &&
-			users[i].opponent === undefined
-		) {
-			new Game(user, users[i]).start();
-		}
-	}
-}
-
-/**
- * Remove user session
- * @param {User} user
- */
 function removeUser(user) {
-	users.splice(users.indexOf(user), 1);
+    users.splice(users.indexOf(user), 1);
 }
 
-/**
- * Game class
- */
-class Game {
-	user1?: User
-	user2?: User
+class UserPlayer implements Player {
+    viewing = true;
+    socket: Socket
+    alive: boolean;
+    parent: ParentBattle;
+    id: number;
+    garbageOut: number;
 
-	/**
-	 * @param {User} user1
-	 * @param {User} user2
-	 */
-	constructor(user1, user2) {
-		this.user1 = user1;
-		this.user2 = user2;
-	}
+    constructor(socket: any, parent: ParentBattle) {
+        this.parent = parent;
+        this.socket = socket;
+        this.alive = true;
+        this.garbageOut = 0;
 
-	/**
-	 * Start new game
-	 */
-	start() {
-		this.user1?.start(this, this.user2);
-		this.user2?.start(this, this.user1);
-	}
+        socket.on("move", (direction: Direction) => {
+            parent.notifyMove(this.id, direction);
+        });
 
-	/**
-	 * Is game ended
-	 * @return {boolean}
-	 */
-	ended() {
-		return this.user1?.guess !== GUESS_NO && this.user2?.guess !== GUESS_NO;
-	}
+        socket.on("sendGarbage", () => {
+            this.garbageOut++;
+        });
 
-	/**
-	 * Final score
-	 */
-	score() {
-		if (
-			this.user1?.guess === GUESS_ROCK && this.user2?.guess === GUESS_SCISSORS ||
-			this.user1?.guess === GUESS_PAPER && this.user2?.guess === GUESS_ROCK ||
-			this.user1?.guess === GUESS_SCISSORS && this.user2?.guess === GUESS_PAPER
-		) {
-			this.user1?.win();
-			this.user2?.lose();
-		} else if (
-			this.user2?.guess === GUESS_ROCK && this.user1?.guess === GUESS_SCISSORS ||
-			this.user2?.guess === GUESS_PAPER && this.user1?.guess === GUESS_ROCK ||
-			this.user2?.guess === GUESS_SCISSORS && this.user1?.guess === GUESS_PAPER
-		) {
-			this.user2?.win();
-			this.user1?.lose();
-		} else {
-			this.user1?.draw();
-			this.user2?.draw();
-		}
-	}
+        socket.on("ackGarbage", (value) => {
+            parent.ackGarbage(this.id, value);
+        });
 
-}
+        socket.on("death", () => {
+            this.alive = false;
+            if (this.lastAttacker) {
+                this.lastAttacker.scoreKill();
+            }
+        });
+    }
+    isAlive(): boolean {
+        return this.alive;
+    }
+    isViewing(): boolean {
+        return this.viewing;
+    }
+    getGarbageOut(): number {
+        return this.garbageOut;
+    }
+    decrementGarbageOut(): void {
+        this.garbageOut--;
+    }
+    scoreKill() {
+        this.socket.emit("scoreKill");
+    }
 
-/**
- * User session class
- */
-class User {
-	game?: Game
-	opponent?: User
-	guess: number
-	socket: Socket
+    notifyGarbage(target: number, value: number) {
+        this.socket.emit("notifyGarbage", target, value);
+    }
 
-	/**
-	 * @param {Socket} socket
-	 */
-	constructor(socket) {
-		this.socket = socket;
-		this.guess = GUESS_NO;
-	}
+    startGame(id: number, seed: number[]) {		
+        this.socket.emit("startGame", id, seed);
+        this.id = id;
+    }
 
-	/**
-	 * Set guess value
-	 * @param {number} guess
-	 */
-	setGuess(guess) {
-		if (
-			!this.opponent ||
-			guess <= GUESS_NO ||
-			guess > GUESS_SCISSORS
-		) {
-			return false;
-		}
-		this.guess = guess;
-		return true;
-	}
+    updateOpponent(opponentId: number, direction: Direction) {
+        this.socket.emit("updateOpponent", opponentId, direction);
+    }
 
-	/**
-	 * Start new game
-	 * @param {Game} game
-	 * @param {User} opponent
-	 */
-	start(game, opponent) {
-		this.game = game;
-		this.opponent = opponent;
-		this.guess = GUESS_NO;
-		this.socket.emit("start");
-	}
-
-	/**
-	 * Terminate game
-	 */
-	end() {
-		this.game = undefined;
-		this.opponent = undefined;
-		this.guess = GUESS_NO;
-		this.socket.emit("end");
-	}
-
-	/**
-	 * Trigger win event
-	 */
-	win() {
-		this.socket.emit("win", this.opponent?.guess);
-	}
-
-	/**
-	 * Trigger lose event
-	 */
-	lose() {
-		this.socket.emit("lose", this.opponent?.guess);
-	}
-
-	/**
-	 * Trigger draw event
-	 */
-	draw() {
-		this.socket.emit("draw", this.opponent?.guess);
-	}
-
+    lastAttacker?: Player;
+    kills: number;
 }
 
 /**
@@ -176,38 +86,77 @@ class User {
  */
 module.exports = {
 
-	io: (socket) => {
-		const user = new User(socket);
-		users.push(user);
-		findOpponent(user);
+    io: (socket) => {
+        //TODO: actual matchmaking
+        const battle = new Battle();
 
-		socket.on("disconnect", () => {
-			console.log("Disconnected: " + socket.id);
-			removeUser(user);
-			if (user.opponent) {
-				user.opponent.end();
-				findOpponent(user.opponent);
-			}
-		});
+        const user = new UserPlayer(socket, battle);
+        users.push(user);
 
-		socket.on("guess", (guess) => {
-			console.log("Guess: " + socket.id);
-			if (user.setGuess(guess) && user.game?.ended()) {
-				user.game?.score();
-				user.game?.start();
-				storage.get('games', 0).then(games => {
-					storage.set('games', games + 1);
-				});
-			}
-		});
+        battle.addPlayer(user);
+        for (let i = 0; i < 8; ++i) {
+            battle.addPlayer(new BotPlayer(battle));
+        }
 
-		console.log("Connected: " + socket.id);
-	},
+        socket.on("disconnect", () => {
+            console.log("Disconnected: " + socket.id);
+            removeUser(user);
+            user.viewing = false;
+        });
 
-	stat: (req, res) => {
-		storage.get('games', 0).then(games => {
-			res.send(`<h1>Games played: ${games}</h1>`);
-		});
-	}
+        console.log("Connected: " + socket.id);
+    }
 
 };
+
+class Battle implements ParentBattle {
+    private players = new Array<Player>();
+
+    start() {
+        const seed = seedFromSystemRandom();
+        for (let id = 0; id < this.players.length; ++id) {
+            this.players[id].startGame(id, seed);
+        }
+    }
+
+    addPlayer(player: Player) {
+        this.players.push(player);
+    }
+
+    notifyMove(id: number, direction: Direction) {
+        for (let i = 0; i < this.players.length; ++i) {
+            if (i !== id) {
+                this.players[i].updateOpponent(i, direction);
+                this.distributeGarbage(id);
+            }
+        }
+    }
+
+    hasViewingPlayers() {
+        return this.players.some(p => p.isViewing);
+    }
+
+    distributeGarbage(attacker: number) {
+        while (this.players[attacker].getGarbageOut() > 0) {
+            this.players[attacker].decrementGarbageOut();
+    
+            let target = attacker;
+            while (target === attacker || !this.players[target].isAlive) {
+                target = Math.floor(Math.random() * this.players.length);
+            }
+    
+            console.log(`Sending garbage from ${attacker} to ${target}`);
+            this.players[target].notifyGarbage(target, 8);
+            this.players[target].notifyGarbage(target, 1);
+            this.players[target].lastAttacker = this.players[attacker];
+        }
+    }
+
+    ackGarbage(id: number, value: any) {
+        for (let i = 0; i < this.players.length; ++i) {
+            if (i !== id) {
+                this.players[i].notifyGarbage(id, value);
+            }
+        }
+    }
+}

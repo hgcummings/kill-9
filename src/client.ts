@@ -1,171 +1,76 @@
-import { Card, Game } from "./game.js";
+declare const io:any
+
+import { Direction, Game } from "./game.js";
+import { ArenaView } from "./graphics.js";
 import { KeyboardInput } from "./input.js";
-import { Bot } from "./bot.js";
-import { seedFromSystemRandom } from "./rng.js";
 
-const playerInput = new KeyboardInput();
-
-const size = 3;
 const games = new Array<Game>();
-const lastRenderedState = new Array<Array<{val:number, since:number}>>();
-const seed = seedFromSystemRandom();
 
-for (let i = 0; i < 9; ++i) {
-    games.push(new Game(size, seed));
-    const initState = new Array<{val:number, since:number}>();
-    for (let j = 0; j < size * size; ++j) {
-        initState.push({ val: 0, since: 0 });
-    }
-    lastRenderedState.push(initState);
-}
+window.addEventListener("load", () => {
+    const socket = io({ upgrade: false, transports: ["websocket"] });
 
-function grpIdx(idx: number, size: number) {
-    return Math.floor(idx / size);
-}
+    let ownId: number;
+    let kills: number;
 
-let canvas: HTMLCanvasElement | null;
-
-function renderCards(cards: Array<Card>, pos: number) {
-    if (!canvas) {
-        let gameElem = document.getElementById("game");
-        if (gameElem === null) {
-            return;
-        }
-        canvas = document.createElement("canvas");
-        canvas.width = window.innerWidth;
-        canvas.height = Math.round(window.innerWidth * 3 / 8);
-        gameElem.appendChild(canvas);
-    }
-
-    const cellSize = pos === 0 ? canvas.width / 12 : canvas.width / 16;
-    const ctx = canvas.getContext("2d")!;
-    ctx.save();
-
-    const offsetX = pos === 0
-        ? canvas.width * 3 / 8
-        : canvas.width * ((grpIdx(pos - 1, 2) * 3 / 16) + (grpIdx(pos - 1, 4) / 4));
-    const offsetY = (pos === 0 || pos % 2 === 1) ? 0 : canvas.height / 2;
-
-    ctx.translate(offsetX, offsetY);
-    ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
-    ctx.fillRect(0, 0, cellSize * size, cellSize * size);
+    let view: ArenaView;
     
-    ctx.fillStyle = "rgb(173,255,47)";
-    ctx.strokeStyle = "rgb(173,255,47)";
-    ctx.shadowColor = "rgba(173,255,47,0.5)";
-    ctx.shadowBlur = 3;
-    ctx.strokeRect(
-        cellSize / 12,
-        cellSize / 12,
-        cellSize * size - cellSize / 6,
-        cellSize * size - cellSize / 6
-    );
-    ctx.shadowBlur = 0;
-    ctx.strokeStyle = "rgba(173,255,47,0.25)";
+    function startGame(id: number, seed: number[]) {
+        ownId = id;
+        kills = 0;
+    
+        for (let i = 0; i < 9; ++i) {
+            games.push(new Game(seed));
+        }
 
-    const renderState = lastRenderedState[pos];
-    for (let i = 0; i < renderState.length; ++i) {
-        const card = cards.find(c => c.x === i % size && c.y === Math.floor(i / size));
-        if (!card) {
-            renderState[i].val = 0;
-        } else {
-            if (card.val != renderState[i].val) {
-                renderState[i].val = card.val;
-                renderState[i].since = Date.now();
-            }
+        view = new ArenaView(games.map(game => game.size));
+        const playerInput = new KeyboardInput();
 
-            const dt = Date.now() - renderState[i].since;
-            ctx.save();
-
-            if (card.val === 8) {
-                ctx.fillStyle = "rgb(255,47,47)";
-                ctx.strokeStyle = "rgba(255,47,47,0.25)";
-            }
-
-            const margin = (1 - size) / 2;
-            ctx.translate(
-                cellSize * (card.x + 0.5 - (card.x + margin) / 6),
-                cellSize * (card.y + 0.5 - (card.y + margin) / 6)
-            );
-            const path = (card.val > 1) ? new Path2D() : null;
-            for (let j = 0; j < card.val; ++j) {
-                const angle = 2 * Math.PI * ((dt / 2000) + (j / card.val));
-                const radius = cellSize / 3;
-                const x = Math.sin(-angle) * radius;
-                const y = Math.cos(-angle) * radius;
-                const size = cellSize / 32;
-                ctx.fillRect(x - size / 2, y - size / 2, size, size);
-
-                if (path) {
-                    if (j === 0) {
-                        path.moveTo(x, y);
-                    } else {
-                        path.lineTo(x, y);
-                    }
+        playerInput.start(dir => {
+            const game = games[ownId];
+            if (game.alive) {
+                game.update(dir);
+                socket.emit("move", dir);
+                while (game.garbageOut > 0) {
+                    socket.emit("sendGarbage");
                 }
+                if (!game.alive) {
+                    socket.emit("death");
+                }
+            } else {
+                playerInput.stop();
             }
-            if (path) {
-                path.closePath();
-                ctx.stroke(path);
-            }
-            ctx.restore();
-        }
+        });
     }
 
-    ctx.restore();
-}
-
-function renderHud(game: { kills: number, score: number }) {
-    document.getElementById("score")!.innerText = game.score.toString();
-    document.getElementById("kills")!.innerText = game.kills.toString();
-}
-
-function distributeGarbage(attacker: number) {
-    while (games[attacker].garbageOut > 0) {
-        games[attacker].garbageOut--;
-
-        let target = attacker;
-        while (target === attacker || !games[target].alive) {
-            target = Math.floor(Math.random() * games.length);
-        }
-
-        console.log(`Sending garbage from ${attacker} to ${target}`);
-        games[target].garbageIn.push(8);
-        games[target].garbageIn.push(1);
-        games[target].lastAttacker = games[attacker];
+    function scoreKill() {
+        kills++;
     }
-}
 
-playerInput.start(dir => {
-    games[0].update(dir);
-    distributeGarbage(0);
-});
-
-const bot = new Bot();
-const botMinTurn = 500;
-const botMaxTurn = 1000;
-for (let i = 1; i < 9; ++i) {
-    const game = games[i];
-    const idx = i;
-    function update() {
-        if (game.alive) {
-            game.update(bot.chooseNextMove(game));
-            distributeGarbage(idx);
-            window.setTimeout(update, botMinTurn + (botMaxTurn - botMinTurn) * Math.random());
+    function notifyGarbage(target:number, value: number) {
+        games[target].garbageIn.push(value);
+        if (target === ownId) {
+            socket.emit("ackGarbage", value);
         }
     }
     
-    window.setTimeout(update, botMinTurn + (botMaxTurn - botMinTurn) * Math.random());
-}
+    function updateOpponent(opponentId: number, direction: Direction) {
+        games[opponentId].update(direction);
+    }
 
-function render() {
-    games.forEach((game, i) => {
-        if (game.alive) {
-            renderCards(game.cards, i);
-        }
-    });
-    renderHud(games[0]);
+    socket.on("startGame", startGame);
+    socket.on("scoreKill", scoreKill);
+    socket.on("notifyGarbage", notifyGarbage);
+    socket.on("updateOpponent", updateOpponent)
+
+    function render() {
+        games.forEach((game, i) => {
+            if (game.alive) {
+                view.renderCards(game.cards, game.size, i, ownId);
+            }
+        });
+        view.renderHud(kills, games[ownId].score);
+        window.requestAnimationFrame(render);
+    }
+    
     window.requestAnimationFrame(render);
-}
-
-window.requestAnimationFrame(render);
+});

@@ -31,10 +31,9 @@ export class Game {
     kills = 0
     garbageIn = new Array<number>()
     garbageOut = 0
-    lastAttacker?: Game
     alive = true
 
-    constructor(size: number, seed: Array<number>) {
+    constructor(seed: Array<number>, size = 3) {
         this.size = size;
         this.iterator = this.newIterator(seed);
 
@@ -81,9 +80,6 @@ export class Game {
 
         if (availableDirections.length === 0) {
             this.alive = false;
-            if (this.lastAttacker) {
-                this.lastAttacker.kills++;
-            }
         }
     }
 
