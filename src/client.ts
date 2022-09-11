@@ -1,15 +1,17 @@
 import { Card, Game } from "./game.js";
 import { KeyboardInput } from "./input.js";
 import { Bot } from "./bot.js";
+import { seedFromSystemRandom } from "./rng.js";
 
 const playerInput = new KeyboardInput();
 
 const size = 3;
 const games = new Array<Game>();
 const lastRenderedState = new Array<Array<{val:number, since:number}>>();
+const seed = seedFromSystemRandom();
 
 for (let i = 0; i < 9; ++i) {
-    games.push(new Game(size));
+    games.push(new Game(size, seed));
     const initState = new Array<{val:number, since:number}>();
     for (let j = 0; j < size * size; ++j) {
         initState.push({ val: 0, since: 0 });

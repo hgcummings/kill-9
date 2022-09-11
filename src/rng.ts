@@ -27,7 +27,7 @@ export class RC4 {
      * @param {Array} seed A byte array to seed the generator.
      * @constructor
      */
-    constructor(seed) {
+    constructor(seed: Array<number>) {
         this.s = new Array(256);
         this.i = 0;
         this.j = 0;
@@ -50,7 +50,7 @@ export class RC4 {
      * Mix additional entropy into this generator.
      * @param {Array} seed
      */
-    mix(seed) {
+    mix(seed: Array<any>) {
         var j = 0;
         for (var i = 0; i < this.s.length; i++) {
             j += this.s[i] + seed[i % seed.length];
@@ -62,7 +62,7 @@ export class RC4 {
     /**
      * @returns {number} The next byte of output from the generator.
      */
-    nextByte() {
+    nextByte(): number {
         this.i = (this.i + 1) % 256;
         this.j = (this.j + this.s[this.i]) % 256;
         this._swap(this.i, this.j);
@@ -72,7 +72,7 @@ export class RC4 {
     /**
      * @returns {number} Uniform random number between 0 and 1.
      */
-    uniform() {
+    uniform(): number {
         var BYTES = 7; // 56 bits to make a 53-bit double
         var output = 0;
         for (var i = 0; i < BYTES; i++) {
@@ -85,7 +85,7 @@ export class RC4 {
     /**
     * Produce a random integer within [n, m).
     */
-    inRange(n, m) {
+    inRange(n: number, m: number) {
         return n + Math.floor(this.uniform() * (m - n));
     };
 }

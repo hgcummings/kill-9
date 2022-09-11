@@ -1,3 +1,5 @@
+import { RC4 } from "./rng.js";
+
 export type Direction = [0,-1] | [1,0] | [0,1] | [-1,0]
 export const ALL_DIRECTIONS: Array<Direction> = [[0,-1], [1,0], [0,1], [-1,0]];
 export const WIN_VAL = 9;
@@ -32,9 +34,9 @@ export class Game {
     lastAttacker?: Game
     alive = true
 
-    constructor(size: number) {
+    constructor(size: number, seed: Array<number>) {
         this.size = size;
-        this.iterator = this.generateNext();
+        this.iterator = this.newIterator(seed);
 
         while (this.cards.length < size) {
             const x = Math.floor(Math.random() * size);
@@ -149,14 +151,15 @@ export class Game {
         }
     }
 
-    private *generateNext() {
+    private *newIterator(seed: Array<number>) {
+        const rng = new RC4(seed);
         const bag = new Array<number>();
 
         while (true) {
             if (bag.length === 0) {
                 const allItems = [1,2];
                 while (allItems.length) {
-                    const randomItem = allItems.splice(Math.floor(Math.random() * allItems.length), 1)[0];
+                    const randomItem = allItems.splice(rng.inRange(0, allItems.length), 1)[0];
                     bag.push(randomItem);
                 }
             }
