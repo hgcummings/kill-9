@@ -97,6 +97,8 @@ global.module.exports = {
             battle.addPlayer(new BotPlayer(battle));
         }
 
+        battle.start();
+
         socket.on("disconnect", () => {
             console.log("Disconnected: " + socket.id);
             removeUser(user);
@@ -105,7 +107,6 @@ global.module.exports = {
 
         console.log("Connected: " + socket.id);
     }
-
 };
 
 class Battle implements ParentBattle {
