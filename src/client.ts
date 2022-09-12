@@ -31,6 +31,7 @@ window.addEventListener("load", () => {
                 game.update(dir);
                 socket.emit("move", dir);
                 while (game.garbageOut > 0) {
+                    game.garbageOut--;
                     socket.emit("sendGarbage");
                 }
                 if (!game.alive) {
