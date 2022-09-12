@@ -123,11 +123,11 @@ class Battle implements ParentBattle {
         this.players.push(player);
     }
 
-    notifyMove(id: number, direction: Direction) {
-        for (let i = 0; i < this.players.length; ++i) {
-            if (i !== id) {
-                this.players[i].updateOpponent(i, direction);
-                this.distributeGarbage(id);
+    notifyMove(sourceId: number, direction: Direction) {
+        for (let playerId = 0; playerId < this.players.length; ++playerId) {
+            if (playerId !== sourceId) {
+                this.players[playerId].updateOpponent(sourceId, direction);
+                this.distributeGarbage(sourceId);
             }
         }
     }
