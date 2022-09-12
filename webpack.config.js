@@ -2,20 +2,20 @@ const path = require('path');
 
 module.exports = {
   entry: {
-    client: './src/client.ts',
+    battle: './src/battle.ts',
+    intro: './src/intro.ts',
     server: './src/server.ts'
   },
   module: {
     rules: [
       {
-        test: /\.tsx?$/,
         use: 'ts-loader',
         exclude: /node_modules/,
       },
     ],
   },
   resolve: {
-    extensions: ['.tsx', '.ts', '.js'],
+    extensions: ['.ts', '.js'],
   },
   optimization: {
     minimize: false,
