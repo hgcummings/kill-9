@@ -52,9 +52,11 @@ export class BotPlayer implements Player {
         this.id = id;
         setTimeout(() => this.makeMove(), botMinTurn + (botMaxTurn - botMinTurn) * Math.random());
     }
-    notifyGarbage(value: number) {
-        this.game.garbageIn.push(value);
-        this.parent.ackGarbage(this.id, value);
+    notifyGarbage(id:number, value: number) {
+        if (id === this.id) {
+            this.game.garbageIn.push(value);
+            this.parent.ackGarbage(this.id, value);
+        }
     }
 
     isAlive(): boolean {
