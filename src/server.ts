@@ -144,18 +144,17 @@ class Battle implements ParentBattle {
             while (target === attacker || !this.players[target].isAlive) {
                 target = Math.floor(Math.random() * this.players.length);
             }
-    
-            console.log(`Sending garbage from ${attacker} to ${target}`);
+
             this.players[target].notifyGarbage(target, 8);
             this.players[target].notifyGarbage(target, 1);
             this.players[target].lastAttacker = this.players[attacker];
         }
     }
 
-    ackGarbage(id: number, value: any) {
+    ackGarbage(target: number, value: any) {
         for (let i = 0; i < this.players.length; ++i) {
-            if (i !== id) {
-                this.players[i].notifyGarbage(id, value);
+            if (i !== target) {
+                this.players[i].notifyGarbage(target, value);
             }
         }
     }
