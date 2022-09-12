@@ -18,7 +18,7 @@ module.exports = {
     extensions: ['.ts', '.js'],
   },
   optimization: {
-    minimize: false,
+    //minimize: false,
   },
   output: {
     filename: '[name].js',

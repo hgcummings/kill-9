@@ -1,7 +1,6 @@
 {
-    "compilerOptions": {
-      "outDir": "./public/",
-      "allowJs": true,
-      "moduleResolution": "node"
-    }
+  "compilerOptions": {
+    "outDir": "./public/",
+    "moduleResolution": "node"
   }
+}
