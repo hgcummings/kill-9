@@ -64,12 +64,15 @@ window.addEventListener("load", () => {
     socket.on("updateOpponent", updateOpponent)
 
     function render() {
-        games.forEach((game, i) => {
-            if (game.alive) {
-                view.renderCards(game.cards, game.size, i, ownId);
-            }
-        });
-        view.renderHud(kills, games[ownId].score);
+        if (view && games.length) {
+            games.forEach((game, i) => {
+                if (game.alive) {
+                    view.renderCards(game.cards, game.size, i, ownId);
+                }
+            });
+            view.renderHud(kills, games[ownId].score);
+        }
+
         window.requestAnimationFrame(render);
     }
     
