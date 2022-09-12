@@ -84,8 +84,7 @@ class UserPlayer implements Player {
  * Socket.IO on connect event
  * @param {Socket} socket
  */
-module.exports = {
-
+global.module.exports = {
     io: (socket) => {
         //TODO: actual matchmaking
         const battle = new Battle();

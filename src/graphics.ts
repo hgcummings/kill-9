@@ -1,4 +1,4 @@
-import { Card } from "./game.js";
+import { Card } from "./game";
 
 function grpIdx(idx: number, size: number) {
     return Math.floor(idx / size);

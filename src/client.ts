@@ -1,8 +1,8 @@
 declare const io:any
 
-import { Direction, Game } from "./game.js";
-import { ArenaView } from "./graphics.js";
-import { KeyboardInput } from "./input.js";
+import { Direction, Game } from "./game";
+import { ArenaView } from "./graphics";
+import { KeyboardInput } from "./input";
 
 const games = new Array<Game>();
 

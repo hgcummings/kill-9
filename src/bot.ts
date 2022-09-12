@@ -1,4 +1,4 @@
-import { ALL_DIRECTIONS, Game, WIN_VAL } from "./game.js";
+import { ALL_DIRECTIONS, Game, WIN_VAL } from "./game";
 
 export function chooseNextMove(game: Game) {
     const options = ALL_DIRECTIONS.map(direction => {

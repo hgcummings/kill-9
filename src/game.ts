@@ -1,4 +1,4 @@
-import { RC4 } from "./rng.js";
+import { RC4 } from "./rng";
 
 export type Direction = [0,-1] | [1,0] | [0,1] | [-1,0]
 export const ALL_DIRECTIONS: Array<Direction> = [[0,-1], [1,0], [0,1], [-1,0]];

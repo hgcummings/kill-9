@@ -8,7 +8,7 @@ Based on [a TypeScript port]() of the js13kserver repository.
 
 Compile the TypeScript with the following command:
 
-    ./compile.sh
+    npx webpack
 
 ## Running
 
