@@ -14,7 +14,5 @@ Scoring:
  * Could be expressed in "kills" (for eliminating other players) and "nines"
 
 Pre-submit todo:
- * Handle server disconnect
  * Show garbage queue
- * Fancier spinner
  * Submit to competition site

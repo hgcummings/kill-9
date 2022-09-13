@@ -68,11 +68,19 @@ window.addEventListener("load", () => {
         games[opponentId].update(direction);
     }
 
+    function disconnect() {
+        arena = null;
+        document.getElementById("game").remove();
+        document.getElementById("hud").remove();
+        document.getElementById("reconnect").style.display = "block";
+    }
+
     socket.on("updatePlayerCount", updatePlayerCount);
     socket.on("startGame", startGame);
     socket.on("scoreKill", scoreKill);
     socket.on("notifyGarbage", notifyGarbage);
     socket.on("updateOpponent", updateOpponent)
+    socket.on("disconnect", disconnect);
 
     function render() {
         if (arena && games.length) {

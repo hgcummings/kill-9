@@ -5,6 +5,7 @@ export interface ParentBattle {
     ackGarbage(id: number, value: any);
     notifyMove(id: number, direction: Direction);
     hasViewingPlayers();
+    removePlayer(player: Player);
 }
 
 export interface Player {

@@ -8,12 +8,7 @@ declare const storage: {
     set(key:string, value:any, json?:boolean): Promise<boolean>
 }
 
-const users = new Array<UserPlayer>();
 let nextBattle: Battle | null = null;
-
-function removeUser(user) {
-    users.splice(users.indexOf(user), 1);
-}
 
 class UserPlayer implements Player {
     viewing = true;
@@ -47,7 +42,17 @@ class UserPlayer implements Player {
                 this.lastAttacker.scoreKill();
             }
         });
+
+        socket.on("disconnect", () => {
+            console.log("Disconnected: " + socket.id);
+            
+            this.viewing = false;
+            this.alive = false;
+
+            parent.removePlayer(this);
+        });
     }
+
     isAlive(): boolean {
         return this.alive;
     }
@@ -96,15 +101,8 @@ global.module.exports = {
         }
 
         const user = new UserPlayer(socket, nextBattle);
-        users.push(user);
 
         nextBattle.addPlayer(user);
-
-        socket.on("disconnect", () => {
-            console.log("Disconnected: " + socket.id);
-            removeUser(user);
-            user.viewing = false;
-        });
 
         console.log("Connected: " + socket.id);
     }
@@ -113,9 +111,11 @@ global.module.exports = {
 class Battle implements ParentBattle {
     private players = new Array<Player>();
     private initTime: number;
+    private started: boolean;
 
     constructor() {
         this.initTime = Date.now();
+        this.started = false;
         setTimeout(() => this.checkPlayerCount(), 1000);
     }
 
@@ -140,11 +140,18 @@ class Battle implements ParentBattle {
         }
     }
 
+    removePlayer(player: Player) {
+        if (!this.started) {
+            this.players.splice(this.players.indexOf(player), 1);
+        }
+    }
+
     start() {
         const seed = seedFromSystemRandom();
         for (let id = 0; id < this.players.length; ++id) {
             this.players[id].startGame(id, seed);
         }
+        this.started = true;
     }
 
     isFull() {
