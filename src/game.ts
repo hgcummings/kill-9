@@ -29,7 +29,8 @@ export class Card {
 }
 
 export class Game {
-    cards = Array<Card>()
+    cards = new Array<Card>()
+    doneCards = new Array<Card>()
     size: number
     next: number
     iterator: Generator<number>
@@ -74,6 +75,7 @@ export class Game {
                 }
             }            
 
+            this.doneCards = this.cards.filter(card => !card.valid());
             this.cards = this.cards.filter(card => card.valid());
 
             const newCard = this.newCardAfterMove(direction);

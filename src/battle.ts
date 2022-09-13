@@ -65,6 +65,7 @@ window.addEventListener("load", () => {
 
     function render() {
         if (view && games.length) {
+            view.renderBackground();
             games.forEach((game, id) => {
                 if (game.alive) {
                     view.renderCards(game, id, ownId);

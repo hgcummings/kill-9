@@ -18,6 +18,7 @@ playerInput.start(dir => {
 
 function render() {
     if (game.alive) {
+        view.renderBackground();
         view.renderCards(game, 0, 0);
     }
 
