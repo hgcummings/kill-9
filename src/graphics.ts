@@ -32,12 +32,12 @@ export class ArenaView {
     }
 
     renderCards(game: Game, id: number, ownId: number) {
+        if (!this.canvas) {
+            return;
+        }
+
         const pos = id === ownId ? 0 : (id === 0 ? ownId : id);
         const { size } = game;
-
-        if (!this.canvas) {
-            throw new Error("Must call renderFrame before renderCards");
-        }
     
         const cellSize = pos === 0 ? this.canvas.width / 12 : this.canvas.width / 16;
         const ctx = this.canvas.getContext("2d")!;
@@ -72,17 +72,18 @@ export class ArenaView {
         for (let x = 0; x < game.size; ++x) {
             for (let y = 0; y < game.size; ++y) {
                 let card = game.cards.find(c => c.x === x && c.y === y);
+                const margin = (1 - game.size) / 2;
                 if (card) {
-                    renderCard(card, game, cellSize, ctx);
+                    renderCard(card, game.cardHistory.get(card), cellSize, margin, ctx);
                 } else {
                     card = game.doneCards.find(c => c.x === x && c.y === y);
                     if (card) {
                         const now = Date.now();
                         if (now < card.since + MOVE_ANIM_MS) {
-                            renderCard(card, game, cellSize, ctx);
+                            renderCard(card, game.cardHistory.get(card), cellSize, margin, ctx);
                         } else if (now < card.since + (2 * MOVE_ANIM_MS)) {
                             const scaleRatio = tween(1, 9, (now - card.since - MOVE_ANIM_MS) / MOVE_ANIM_MS);
-                            renderCard(card, game, cellSize, ctx, scaleRatio);
+                            renderCard(card, game.cardHistory.get(card), cellSize, margin, ctx, scaleRatio);
                         }
                     }
                 }
@@ -100,13 +101,13 @@ export class ArenaView {
     }
 }
     
-function renderCard(card: Card, game: Game, cellSize: number, ctx: CanvasRenderingContext2D, scaleRatio = 1) {
+function renderCard(card: Card, history: Array<Card>, cellSize: number, margin:number, ctx: CanvasRenderingContext2D, scaleRatio = 1) {
     const dt = Date.now() - card.since;
     const startPoints = new Array<{ x: number; y: number; }>();
 
-    if (dt < MOVE_ANIM_MS && game.cardHistory.get(card)?.length) {
+    if (dt < MOVE_ANIM_MS && history?.length) {
         let j = 0;
-        for (const prevCard of game.cardHistory.get(card)!) {
+        for (const prevCard of history) {
             for (let k = 0; k < prevCard.val; ++k) {
                 const startPoint = particlePosition(dt, j, card.val, cellSize);
                 startPoint.x += cellSize * (prevCard.x - card.x);
@@ -127,7 +128,6 @@ function renderCard(card: Card, game: Game, cellSize: number, ctx: CanvasRenderi
         ctx.strokeStyle = "rgba(255,173,47,0.25)";
     }
 
-    const margin = (1 - game.size) / 2;
     ctx.translate(
         cellSize * (card.x + 0.5 - (card.x + margin) / 6),
         cellSize * (card.y + 0.5 - (card.y + margin) / 6)
