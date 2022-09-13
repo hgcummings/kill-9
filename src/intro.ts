@@ -18,7 +18,7 @@ playerInput.start(dir => {
 
 function render() {
     if (game.alive) {
-        view.renderCards(game.cards, game.cardHistory, game.size, 0, 0);
+        view.renderCards(game, 0, 0);
     }
 
     window.requestAnimationFrame(render);

@@ -1,4 +1,4 @@
-import { Card } from "./game";
+import { Card, Game } from "./game";
 
 function grpIdx(idx: number, size: number) {
     return Math.floor(idx / size);
@@ -13,8 +13,9 @@ const MOVE_ANIM_MS = 250;
 export class ArenaView {
     private canvas?: HTMLCanvasElement;
 
-    renderCards(cards: Array<Card>, cardHistory: WeakMap<Card, Array<Card>>, size: number, id: number, ownId: number) {
+    renderCards(game: Game, id: number, ownId: number) {
         const pos = id === ownId ? 0 : (id === 0 ? ownId : id);
+        const { size } = game;
     
         if (!this.canvas) {
             let gameElem = document.getElementById("game");
@@ -53,76 +54,82 @@ export class ArenaView {
         ctx.shadowBlur = 0;
         ctx.strokeStyle = "rgba(173,255,47,0.25)";
     
-        for (let i = 0; i < (size * size); ++i) {
-            const card = cards.find(c => c.x === i % size && c.y === Math.floor(i / size));
-            if (card) {
-                const dt = Date.now() - card.since;
-                const startPoints = new Array<{x: number, y: number}>();
-
-                if (dt < MOVE_ANIM_MS && cardHistory.get(card)?.length) {
-                    let j = 0;
-                    for (const prevCard of cardHistory.get(card)!) {
-                        for (let k = 0; k < prevCard.val; ++k) {
-                            const startPoint = this.particlePosition(dt, j, card.val, cellSize);
-                            startPoint.x += cellSize * (prevCard.x - card.x);
-                            startPoint.y += cellSize * (prevCard.y - card.y);
-                            startPoints.push(startPoint);
-                            j += 1;
-                        }
-                    }
+        for (let x = 0; x < game.size; ++x) {
+            for (let y = 0; y < game.size; ++y) {
+                const card = game.cards.find(c => c.x === x && c.y === y);
+                if (card) {
+                    this.renderCard(card, game, cellSize, ctx);
                 }
-
-                ctx.save();
-    
-                if (card.val === 8) {
-                    ctx.fillStyle = "rgb(255,47,47)";
-                    ctx.strokeStyle = "rgba(255,47,47,0.25)";
-                }
-    
-                const margin = (1 - size) / 2;
-                ctx.translate(
-                    cellSize * (card.x + 0.5 - (card.x + margin) / 6),
-                    cellSize * (card.y + 0.5 - (card.y + margin) / 6)
-                );
-                const path = (card.val > 1) ? new Path2D() : null;
-                for (let j = 0; j < card.val; ++j) {
-                    let { x, y } = this.particlePosition(dt, j, card.val, cellSize);
-
-                    if (path && startPoints.length < card.val) {
-                        if (j === 0) {
-                            path.moveTo(x, y);
-                        } else {
-                            path.lineTo(x, y);
-                        }
-                    }
-
-                    if (startPoints.length > j) {
-                        x = tween(startPoints[j].x, x, dt / MOVE_ANIM_MS);
-                        y = tween(startPoints[j].y, y, dt / MOVE_ANIM_MS);
-                    }
-
-                    if (path && startPoints.length === card.val) {
-                        if (j === 0) {
-                            path.moveTo(x, y);
-                        } else {
-                            path.lineTo(x, y);
-                        }
-                    }
-
-                    const size = cellSize / 32;
-                    ctx.fillRect(x - size / 2, y - size / 2, size, size);
-                }
-                if (path) {
-                    path.closePath();
-                    ctx.stroke(path);
-                }
-                ctx.restore();
             }
         }
     
         ctx.restore();
     }
     
+    private renderCard(card: Card, game: Game, cellSize: number, ctx: CanvasRenderingContext2D) {
+        const dt = Date.now() - card.since;
+        const startPoints = new Array<{ x: number; y: number; }>();
+
+        if (dt < MOVE_ANIM_MS && game.cardHistory.get(card)?.length) {
+            let j = 0;
+            for (const prevCard of game.cardHistory.get(card)!) {
+                for (let k = 0; k < prevCard.val; ++k) {
+                    const startPoint = this.particlePosition(dt, j, card.val, cellSize);
+                    startPoint.x += cellSize * (prevCard.x - card.x);
+                    startPoint.y += cellSize * (prevCard.y - card.y);
+                    startPoints.push(startPoint);
+                    j += 1;
+                }
+            }
+        }
+
+        ctx.save();
+
+        if (card.val === 8) {
+            ctx.fillStyle = "rgb(255,47,47)";
+            ctx.strokeStyle = "rgba(255,47,47,0.25)";
+        }
+
+        const margin = (1 - game.size) / 2;
+        ctx.translate(
+            cellSize * (card.x + 0.5 - (card.x + margin) / 6),
+            cellSize * (card.y + 0.5 - (card.y + margin) / 6)
+        );
+        const path = (card.val > 1) ? new Path2D() : null;
+        for (let j = 0; j < card.val; ++j) {
+            let { x, y } = this.particlePosition(dt, j, card.val, cellSize);
+
+            if (path && startPoints.length < card.val) {
+                if (j === 0) {
+                    path.moveTo(x, y);
+                } else {
+                    path.lineTo(x, y);
+                }
+            }
+
+            if (startPoints.length > j) {
+                x = tween(startPoints[j].x, x, dt / MOVE_ANIM_MS);
+                y = tween(startPoints[j].y, y, dt / MOVE_ANIM_MS);
+            }
+
+            if (path && startPoints.length === card.val) {
+                if (j === 0) {
+                    path.moveTo(x, y);
+                } else {
+                    path.lineTo(x, y);
+                }
+            }
+
+            const size = cellSize / 32;
+            ctx.fillRect(x - size / 2, y - size / 2, size, size);
+        }
+        if (path) {
+            path.closePath();
+            ctx.stroke(path);
+        }
+        ctx.restore();
+    }
+
     private particlePosition(dt: number, idx: number, count: number, cellSize: number) {
         const angle = 2 * Math.PI * ((dt / 2000) + (idx / count));
         const radius = cellSize / 3;
