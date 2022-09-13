@@ -2,5 +2,4 @@
 /.idea
 /.vscode
 /dist.zip
-/public/*.js
 *.sqlite
