@@ -22,7 +22,7 @@ window.addEventListener("load", () => {
             games.push(new Game(seed));
         }
 
-        view = new ArenaView(games.map(game => game.size));
+        view = new ArenaView();
         const playerInput = new KeyboardInput();
 
         playerInput.start(dir => {
@@ -67,7 +67,7 @@ window.addEventListener("load", () => {
         if (view && games.length) {
             games.forEach((game, i) => {
                 if (game.alive) {
-                    view.renderCards(game.cards, game.size, i, ownId);
+                    view.renderCards(game.cards, game.cardHistory, game.size, i, ownId);
                 }
             });
             view.renderHud(kills, games[ownId].score);

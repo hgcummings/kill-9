@@ -5,7 +5,7 @@ import { seedFromSystemRandom } from "./rng";
 
 const game = new Game(seedFromSystemRandom());
 
-const view = new ArenaView([game.size]);
+const view = new ArenaView();
 const playerInput = new KeyboardInput();
 
 playerInput.start(dir => {
@@ -18,7 +18,7 @@ playerInput.start(dir => {
 
 function render() {
     if (game.alive) {
-        view.renderCards(game.cards, game.size, 0, 0);
+        view.renderCards(game.cards, game.cardHistory, game.size, 0, 0);
     }
 
     window.requestAnimationFrame(render);

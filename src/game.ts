@@ -8,12 +8,18 @@ export class Card {
     x: number
     y: number
     val: number
+    since: number
+
+    constructor() {
+        this.since = Date.now();
+    }
     
     copy() {
         const newCard = new Card();
         newCard.x = this.x;
         newCard.y = this.y;
         newCard.val = this.val;
+        newCard.since = this.since;
         return newCard;
     }
 
@@ -32,6 +38,7 @@ export class Game {
     garbageIn = new Array<number>()
     garbageOut = 0
     alive = true
+    cardHistory = new WeakMap<Card, Array<Card>>()
 
     constructor(seed: Array<number>, size = 3) {
         this.size = size;
@@ -83,6 +90,13 @@ export class Game {
         }
     }
 
+    addSourceToCard(card: Card, source:Card) {
+        if (!this.cardHistory.has(card)) {
+            this.cardHistory.set(card, new Array<Card>());
+        }
+        this.cardHistory.get(card)!.push(source);
+    }
+
     existingCardsAfterMove(direction: Direction) {
         let cardsToProcess = this.cards.concat();
         let newCards = new Array<Card>();
@@ -111,6 +125,8 @@ export class Game {
                         if (this.canMerge(card.val, cardAtTarget.val)) {
                             // Case 2: card can merge into another card
                             cardAtTarget.val += card.val;
+                            this.addSourceToCard(cardAtTarget, card);
+                            cardAtTarget.since = Date.now();
                             areChanged = true;
                         } else {
                             // Case 3: card can't move because it's against another card
@@ -127,6 +143,7 @@ export class Game {
                             newCard.y = newY;
                             newCard.val = card.val;
                             newCards.push(newCard);
+                            this.addSourceToCard(newCard, card);
                             areChanged = true;
                         }
                     }
