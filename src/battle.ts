@@ -67,9 +67,7 @@ window.addEventListener("load", () => {
         if (view && games.length) {
             view.renderBackground();
             games.forEach((game, id) => {
-                if (game.alive) {
-                    view.renderCards(game, id, ownId);
-                }
+                view.renderCards(game, id, ownId);
             });
             view.renderHud(kills, games[ownId].score);
         }

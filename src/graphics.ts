@@ -52,6 +52,12 @@ export class ArenaView {
         ctx.fillStyle = "rgb(173,255,47)";
         ctx.strokeStyle = "rgb(173,255,47)";
         ctx.shadowColor = "rgba(173,255,47,0.5)";
+
+        if (!game.alive) {
+            ctx.strokeStyle = "rgba(255,47,47,0.25)";
+            ctx.shadowColor = "rgba(255,47,47,0.5)";
+        }
+
         ctx.shadowBlur = 3;
         ctx.strokeRect(
             cellSize / 12,
