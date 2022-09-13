@@ -2,9 +2,9 @@ import { ALL_DIRECTIONS, Game, WIN_VAL } from "./game";
 
 export function chooseNextMove(game: Game) {
     const options = ALL_DIRECTIONS.map(direction => {
-        const { newCards, move } = game.moveInDirection(direction);
+        const { newCards, areChanged } = game.existingCardsAfterMove(direction);
 
-        let score = move.cards.length ? 0 : -Infinity;
+        let score = areChanged ? 0 : -Infinity;
 
         for (const card of newCards) {
             if (card.val === WIN_VAL) {

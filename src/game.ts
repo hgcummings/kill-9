@@ -22,8 +22,6 @@ export class Card {
     }
 }
 
-export type Move = { direction: Direction, time: number, cards: Array<Card> }
-
 export class Game {
     cards = Array<Card>()
     size: number
@@ -34,7 +32,6 @@ export class Game {
     garbageIn = new Array<number>()
     garbageOut = 0
     alive = true
-    lastMove: Move
 
     constructor(seed: Array<number>, size = 3) {
         this.size = size;
@@ -59,9 +56,9 @@ export class Game {
     }
 
     update(direction: Direction) {
-        let { newCards, move } = this.moveInDirection(direction);
+        let { newCards, areChanged } = this.existingCardsAfterMove(direction);
 
-        if (move.cards.length) {
+        if (areChanged) {
             this.cards = newCards;
             for (const card of this.cards) {
                 if (card.val === WIN_VAL) {
@@ -71,25 +68,25 @@ export class Game {
             }            
 
             this.cards = this.cards.filter(card => card.valid());
-            this.lastMove = move;
 
             const newCard = this.newCardAfterMove(direction);
+
             this.cards.push(newCard);
         }
 
         const availableDirections = ALL_DIRECTIONS
-            .map(direction => this.moveInDirection(direction))
-            .filter(result => result.move.cards.length);
+            .map(direction => this.existingCardsAfterMove(direction))
+            .filter(result => result.areChanged);
 
         if (availableDirections.length === 0) {
             this.alive = false;
         }
     }
 
-    moveInDirection(direction: Direction) {
+    existingCardsAfterMove(direction: Direction) {
         let cardsToProcess = this.cards.concat();
         let newCards = new Array<Card>();
-        let move: Move = { direction, time: Date.now(), cards: new Array<Card>() };
+        let areChanged = false;
         let finalPass = false;
 
         while(true) {
@@ -114,7 +111,7 @@ export class Game {
                         if (this.canMerge(card.val, cardAtTarget.val)) {
                             // Case 2: card can merge into another card
                             cardAtTarget.val += card.val;
-                            move.cards.push(card);
+                            areChanged = true;
                         } else {
                             // Case 3: card can't move because it's against another card
                             newCards.push(card.copy());
@@ -130,7 +127,7 @@ export class Game {
                             newCard.y = newY;
                             newCard.val = card.val;
                             newCards.push(newCard);
-                            move.cards.push(card);
+                            areChanged = true;
                         }
                     }
                 }
@@ -146,7 +143,7 @@ export class Game {
 
         return {
             newCards,
-            move
+            areChanged
         }
     }
 
