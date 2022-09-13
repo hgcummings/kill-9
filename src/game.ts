@@ -43,11 +43,12 @@ export class Game {
 
     constructor(seed: Array<number>, size = 3) {
         this.size = size;
-        this.iterator = this.newIterator(seed);
+        const rng = new RC4(seed);
+        this.iterator = this.newIterator(rng);
 
         while (this.cards.length < size) {
-            const x = Math.floor(Math.random() * size);
-            const y = Math.floor(Math.random() * size);
+            const x = rng.inRange(0, size);
+            const y = rng.inRange(0, size);
 
             if (this.cardAt(x, y)) {
                 continue;
@@ -166,8 +167,7 @@ export class Game {
         }
     }
 
-    private *newIterator(seed: Array<number>) {
-        const rng = new RC4(seed);
+    private *newIterator(rng: RC4) {
         const bag = new Array<number>();
 
         while (true) {

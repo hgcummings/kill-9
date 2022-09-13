@@ -12,6 +12,7 @@ export interface Player {
 	isAlive(): boolean;
     isViewing(): boolean;
     notifyGarbage(id: number, value: number);
+    updatePlayerCount(count: number);
 	startGame(id: number, seed: number[]);
 	updateOpponent(opponentId: number, direction: Direction);
     lastAttacker?: Player;
@@ -35,7 +36,7 @@ export class BotPlayer implements Player {
     }
 
     makeMove() {
-        if (this.game.alive) {
+        if (this.game.alive && this.parent.hasViewingPlayers) {
             const move = chooseNextMove(this.game);
             this.game.update(move);
             this.parent.notifyMove(this.id, move);
@@ -75,6 +76,9 @@ export class BotPlayer implements Player {
         return this.viewing;
     }
 
+    updatePlayerCount(count: number) {
+        // No-op (don't display player count)
+    }
     updateOpponent(opponentId: number, direction: Direction) {
         // No-op (don't react to other players moving)
     }

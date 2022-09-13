@@ -8,7 +8,8 @@ declare const storage: {
     set(key:string, value:any, json?:boolean): Promise<boolean>
 }
 
-const users = Array<UserPlayer>();
+const users = new Array<UserPlayer>();
+let nextBattle: Battle | null = null;
 
 function removeUser(user) {
     users.splice(users.indexOf(user), 1);
@@ -67,6 +68,10 @@ class UserPlayer implements Player {
         this.socket.emit("notifyGarbage", target, value);
     }
 
+    updatePlayerCount(count: number) {
+        this.socket.emit("updatePlayerCount", count);
+    }
+
     startGame(id: number, seed: number[]) {		
         this.socket.emit("startGame", id, seed);
         this.id = id;
@@ -86,18 +91,14 @@ class UserPlayer implements Player {
  */
 global.module.exports = {
     io: (socket) => {
-        //TODO: actual matchmaking
-        const battle = new Battle();
-
-        const user = new UserPlayer(socket, battle);
-        users.push(user);
-
-        battle.addPlayer(user);
-        for (let i = 0; i < 8; ++i) {
-            battle.addPlayer(new BotPlayer(battle));
+        if (nextBattle === null || nextBattle.isFull()) {
+            nextBattle = new Battle();
         }
 
-        battle.start();
+        const user = new UserPlayer(socket, nextBattle);
+        users.push(user);
+
+        nextBattle.addPlayer(user);
 
         socket.on("disconnect", () => {
             console.log("Disconnected: " + socket.id);
@@ -111,12 +112,43 @@ global.module.exports = {
 
 class Battle implements ParentBattle {
     private players = new Array<Player>();
+    private initTime: number;
+
+    constructor() {
+        this.initTime = Date.now();
+        setTimeout(() => this.checkPlayerCount(), 1000);
+    }
+
+    checkPlayerCount() {
+        if (this.players.length === 9) {
+            this.start();
+        } else {
+            const displayPlayerCount =
+                Math.max(this.players.length, Math.floor((Date.now()-this.initTime)/1000));
+            
+            if (displayPlayerCount === 9) {
+                while (this.players.length < 9) {
+                    this.addPlayer(new BotPlayer(this));
+                }
+                this.start();
+            } else {
+                for (const player of this.players) {
+                    player.updatePlayerCount(displayPlayerCount);
+                }
+                setTimeout(() => this.checkPlayerCount(), 1000);
+            }
+        }
+    }
 
     start() {
         const seed = seedFromSystemRandom();
         for (let id = 0; id < this.players.length; ++id) {
             this.players[id].startGame(id, seed);
         }
+    }
+
+    isFull() {
+        return this.players.length === 9;
     }
 
     addPlayer(player: Player) {

@@ -14,7 +14,13 @@ window.addEventListener("load", () => {
 
     let view: ArenaView;
     
+    function updatePlayerCount(count: number) {
+        document.getElementById("spinner").innerText = count.toString();
+    }
+
     function startGame(id: number, seed: number[]) {
+        document.getElementById("wait").remove();
+
         ownId = id;
         kills = 0;
     
@@ -23,6 +29,7 @@ window.addEventListener("load", () => {
         }
 
         view = new ArenaView();
+        document.getElementById("hud").style.display = "block";
         const playerInput = new KeyboardInput();
 
         playerInput.start(dir => {
@@ -58,6 +65,7 @@ window.addEventListener("load", () => {
         games[opponentId].update(direction);
     }
 
+    socket.on("updatePlayerCount", updatePlayerCount);
     socket.on("startGame", startGame);
     socket.on("scoreKill", scoreKill);
     socket.on("notifyGarbage", notifyGarbage);
