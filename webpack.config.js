@@ -2,9 +2,16 @@ const path = require('path');
 
 module.exports = {
   entry: {
-    battle: './src/battle.ts',
+    battle: {
+      import: './src/battle.ts',
+      dependOn: 'graphics'
+    },
+    intro: {
+      import: './src/intro.ts',
+      dependOn: 'graphics'
+    },
+    graphics: './src/graphics.ts',
     index: './src/index.ts',
-    intro: './src/intro.ts',
     server: './src/server.ts'
   },
   module: {
@@ -19,7 +26,7 @@ module.exports = {
     extensions: ['.ts', '.js'],
   },
   optimization: {
-    //minimize: false,
+    minimize: true,
   },
   output: {
     filename: '[name].js',
