@@ -73,16 +73,16 @@ export class ArenaView {
             for (let y = 0; y < game.size; ++y) {
                 let card = game.cards.find(c => c.x === x && c.y === y);
                 if (card) {
-                    this.renderCard(card, game, cellSize, ctx);
+                    renderCard(card, game, cellSize, ctx);
                 } else {
                     card = game.doneCards.find(c => c.x === x && c.y === y);
                     if (card) {
                         const now = Date.now();
                         if (now < card.since + MOVE_ANIM_MS) {
-                            this.renderCard(card, game, cellSize, ctx);
+                            renderCard(card, game, cellSize, ctx);
                         } else if (now < card.since + (2 * MOVE_ANIM_MS)) {
                             const scaleRatio = tween(1, 9, (now - card.since - MOVE_ANIM_MS) / MOVE_ANIM_MS);
-                            this.renderCard(card, game, cellSize, ctx, scaleRatio);
+                            renderCard(card, game, cellSize, ctx, scaleRatio);
                         }
                     }
                 }
@@ -93,84 +93,84 @@ export class ArenaView {
     
         ctx.restore();
     }
-    
-    private renderCard(card: Card, game: Game, cellSize: number, ctx: CanvasRenderingContext2D, scaleRatio = 1) {
-        const dt = Date.now() - card.since;
-        const startPoints = new Array<{ x: number; y: number; }>();
-
-        if (dt < MOVE_ANIM_MS && game.cardHistory.get(card)?.length) {
-            let j = 0;
-            for (const prevCard of game.cardHistory.get(card)!) {
-                for (let k = 0; k < prevCard.val; ++k) {
-                    const startPoint = this.particlePosition(dt, j, card.val, cellSize);
-                    startPoint.x += cellSize * (prevCard.x - card.x);
-                    startPoint.y += cellSize * (prevCard.y - card.y);
-                    startPoints.push(startPoint);
-                    j += 1;
-                }
-            }
-        }
-
-        ctx.save();
-
-        if (card.val === 8 || card.val > 9) {
-            ctx.fillStyle = "rgb(255,47,47)";
-            ctx.strokeStyle = "rgba(255,47,47,0.25)";
-        } else if (card.val === 9) {
-            ctx.fillStyle = "rgb(255,173,47)";
-            ctx.strokeStyle = "rgba(255,173,47,0.25)";
-        }
-
-        const margin = (1 - game.size) / 2;
-        ctx.translate(
-            cellSize * (card.x + 0.5 - (card.x + margin) / 6),
-            cellSize * (card.y + 0.5 - (card.y + margin) / 6)
-        );
-        const path = (card.val > 1 && scaleRatio === 1) ? new Path2D() : null;
-        for (let j = 0; j < card.val; ++j) {
-            let { x, y } = this.particlePosition(dt, j, card.val, cellSize, scaleRatio);
-
-            if (path && startPoints.length < card.val) {
-                if (j === 0) {
-                    path.moveTo(x, y);
-                } else {
-                    path.lineTo(x, y);
-                }
-            }
-
-            if (startPoints.length > j) {
-                x = tween(startPoints[j].x, x, dt / MOVE_ANIM_MS);
-                y = tween(startPoints[j].y, y, dt / MOVE_ANIM_MS);
-            }
-
-            if (path && startPoints.length === card.val) {
-                if (j === 0) {
-                    path.moveTo(x, y);
-                } else {
-                    path.lineTo(x, y);
-                }
-            }
-
-            const particleSize = cellSize / 32;
-            ctx.fillRect(x - particleSize / 2, y - particleSize / 2, particleSize, particleSize);
-        }
-        if (path) {
-            path.closePath();
-            ctx.stroke(path);
-        }
-        ctx.restore();
-    }
-
-    private particlePosition(dt: number, idx: number, count: number, cellSize: number, scaleRatio = 1) {
-        const angle = 2 * Math.PI * ((dt / 2000) + (idx / count));
-        const radius = scaleRatio * cellSize / 3;
-        let x = Math.sin(-angle) * radius;
-        let y = Math.cos(-angle) * radius;
-        return { x, y };
-    }
 
     renderHud(kills: number, score: number) {
         document.getElementById("kills")!.innerText = kills.toString();
         document.getElementById("score")!.innerText = score.toString();
     }
+}
+    
+function renderCard(card: Card, game: Game, cellSize: number, ctx: CanvasRenderingContext2D, scaleRatio = 1) {
+    const dt = Date.now() - card.since;
+    const startPoints = new Array<{ x: number; y: number; }>();
+
+    if (dt < MOVE_ANIM_MS && game.cardHistory.get(card)?.length) {
+        let j = 0;
+        for (const prevCard of game.cardHistory.get(card)!) {
+            for (let k = 0; k < prevCard.val; ++k) {
+                const startPoint = particlePosition(dt, j, card.val, cellSize);
+                startPoint.x += cellSize * (prevCard.x - card.x);
+                startPoint.y += cellSize * (prevCard.y - card.y);
+                startPoints.push(startPoint);
+                j += 1;
+            }
+        }
+    }
+
+    ctx.save();
+
+    if (card.val === 8 || card.val > 9) {
+        ctx.fillStyle = "rgb(255,47,47)";
+        ctx.strokeStyle = "rgba(255,47,47,0.25)";
+    } else if (card.val === 9) {
+        ctx.fillStyle = "rgb(255,173,47)";
+        ctx.strokeStyle = "rgba(255,173,47,0.25)";
+    }
+
+    const margin = (1 - game.size) / 2;
+    ctx.translate(
+        cellSize * (card.x + 0.5 - (card.x + margin) / 6),
+        cellSize * (card.y + 0.5 - (card.y + margin) / 6)
+    );
+    const path = (card.val > 1 && scaleRatio === 1) ? new Path2D() : null;
+    for (let j = 0; j < card.val; ++j) {
+        let { x, y } = particlePosition(dt, j, card.val, cellSize, scaleRatio);
+
+        if (path && startPoints.length < card.val) {
+            if (j === 0) {
+                path.moveTo(x, y);
+            } else {
+                path.lineTo(x, y);
+            }
+        }
+
+        if (startPoints.length > j) {
+            x = tween(startPoints[j].x, x, dt / MOVE_ANIM_MS);
+            y = tween(startPoints[j].y, y, dt / MOVE_ANIM_MS);
+        }
+
+        if (path && startPoints.length === card.val) {
+            if (j === 0) {
+                path.moveTo(x, y);
+            } else {
+                path.lineTo(x, y);
+            }
+        }
+
+        const particleSize = cellSize / 32;
+        ctx.fillRect(x - particleSize / 2, y - particleSize / 2, particleSize, particleSize);
+    }
+    if (path) {
+        path.closePath();
+        ctx.stroke(path);
+    }
+    ctx.restore();
+}
+
+function particlePosition(dt: number, idx: number, count: number, cellSize: number, scaleRatio = 1) {
+    const angle = 2 * Math.PI * ((dt / 2000) + (idx / count));
+    const radius = scaleRatio * cellSize / 3;
+    let x = Math.sin(-angle) * radius;
+    let y = Math.cos(-angle) * radius;
+    return { x, y };
 }
