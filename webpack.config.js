@@ -3,6 +3,7 @@ const path = require('path');
 module.exports = {
   entry: {
     battle: './src/battle.ts',
+    index: './src/index.ts',
     intro: './src/intro.ts',
     server: './src/server.ts'
   },

@@ -13,7 +13,7 @@ const MOVE_ANIM_MS = 250;
 export class ArenaView {
     private canvas?: HTMLCanvasElement;
 
-    renderBackground() {
+    renderBackground(playerCount: number) {
         if (!this.canvas) {
             let gameElem = document.getElementById("game");
             if (gameElem === null) {
@@ -21,7 +21,8 @@ export class ArenaView {
             }
             this.canvas = document.createElement("canvas");
             this.canvas.width = window.innerWidth;
-            this.canvas.height = Math.round(window.innerWidth * 3 / 8);
+            this.canvas.height = playerCount === 1 ?
+                Math.round(window.innerWidth / 4) : Math.round(window.innerWidth * 3 / 8);
             gameElem.appendChild(this.canvas);
         }
         
@@ -171,5 +172,5 @@ export class ArenaView {
     renderHud(kills: number, score: number) {
         document.getElementById("kills")!.innerText = kills.toString();
         document.getElementById("score")!.innerText = score.toString();
-    } 
+    }
 }
