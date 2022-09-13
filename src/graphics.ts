@@ -100,6 +100,42 @@ export class ArenaView {
         document.getElementById("score")!.innerText = score.toString();
     }
 }
+
+export class SpinnerView {
+    private canvas?: HTMLCanvasElement;
+    private card?: Card;
+
+    render(count: number) {
+        if (!this.canvas) {
+            let parentElem = document.getElementById("spinner");
+            if (parentElem === null) {
+                return;
+            }
+            this.canvas = document.createElement("canvas");
+            this.canvas.width = Math.floor(window.innerWidth / 8);
+            this.canvas.height = this.canvas.width;
+            parentElem.appendChild(this.canvas);
+        }
+
+        if (!this.card) {
+            this.card = new Card();
+            this.card.val = 0;
+            this.card.x = 0;
+            this.card.y = 0;
+        }
+
+        this.card.val = count;
+        const ctx = this.canvas.getContext("2d");
+
+        ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
+        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        ctx.fillStyle = "rgb(173,255,47)";
+        ctx.strokeStyle = "rgba(173,255,47,0.25)";
+
+        renderCard(this.card, null, this.canvas.width, 0, ctx);
+    }
+}
     
 function renderCard(card: Card, history: Array<Card>, cellSize: number, margin:number, ctx: CanvasRenderingContext2D, scaleRatio = 1) {
     const dt = Date.now() - card.since;

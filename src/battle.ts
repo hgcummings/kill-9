@@ -1,7 +1,7 @@
 declare const io:any
 
 import { Direction, Game } from "./game";
-import { ArenaView } from "./graphics";
+import { ArenaView, SpinnerView } from "./graphics";
 import { KeyboardInput } from "./input";
 
 const games = new Array<Game>();
@@ -12,10 +12,13 @@ window.addEventListener("load", () => {
     let ownId: number;
     let kills: number;
 
-    let view: ArenaView;
+    let arena: ArenaView;
+    let playerCount = 1;
+
+    const spinner = new SpinnerView();
     
     function updatePlayerCount(count: number) {
-        document.getElementById("spinner").innerText = count.toString();
+        playerCount = count;
     }
 
     function startGame(id: number, seed: number[]) {
@@ -28,7 +31,7 @@ window.addEventListener("load", () => {
             games.push(new Game(seed));
         }
 
-        view = new ArenaView();
+        arena = new ArenaView();
         document.getElementById("hud").style.display = "block";
         const playerInput = new KeyboardInput();
 
@@ -72,12 +75,14 @@ window.addEventListener("load", () => {
     socket.on("updateOpponent", updateOpponent)
 
     function render() {
-        if (view && games.length) {
-            view.renderBackground(games.length);
+        if (arena && games.length) {
+            arena.renderBackground(games.length);
             games.forEach((game, id) => {
-                view.renderCards(game, id, ownId);
+                arena.renderCards(game, id, ownId);
             });
-            view.renderHud(kills, games[ownId].score);
+            arena.renderHud(kills, games[ownId].score);
+        } else {
+            spinner.render(playerCount);
         }
 
         window.requestAnimationFrame(render);
